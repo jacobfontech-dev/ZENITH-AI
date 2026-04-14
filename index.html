@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZENITH AI · Asistente Cognitivo</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e66">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: #f5f5f7; color: #1c1c1e; height: 100vh; overflow: hidden; position: relative; }
+        body::before { content: "ZENITH AI"; position: fixed; bottom: 20px; right: 20px; font-size: 3rem; font-weight: 800; color: rgba(0,0,0,0.03); pointer-events: none; z-index: 0; letter-spacing: -2px; transform: rotate(-5deg); }
+        .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: rgba(255,255,255,0.96); backdrop-filter: blur(20px); border-right: 1px solid rgba(0,0,0,0.08); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1); z-index: 30; display: flex; flex-direction: column; box-shadow: 2px 0 12px rgba(0,0,0,0.05); }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .sidebar-header h2 { font-weight: 600; font-size: 1.3rem; background: linear-gradient(135deg, #1e1e2f, #2c3e66); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .new-chat-btn { margin: 16px 20px; padding: 12px; background: #e9e9ef; border: none; border-radius: 32px; font-weight: 500; color: #1c1c1e; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+        .new-chat-btn:active { background: #d9d9e0; }
+        #chat-list { flex: 1; overflow-y: auto; padding: 0 12px; }
+        .chat-item { padding: 12px 14px; border-radius: 14px; margin-bottom: 6px; cursor: pointer; font-size: 0.85rem; color: #2c2c2e; transition: background 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item:active, .chat-item.active { background: #e9e9ef; }
+        .main { display: flex; flex-direction: column; height: 100%; position: relative; z-index: 2; background: #ffffff; }
+        .app-header { padding: 16px 20px; border-bottom: 1px solid #e9e9ef; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
+        .menu-btn { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #1c1c1e; padding: 4px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 36px; height: 36px; background: #e9e9ef; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #2c3e66; }
+        .logout-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 6px; }
+        .chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #ffffff; }
+        .message { max-width: 85%; padding: 12px 18px; border-radius: 24px; font-size: 0.95rem; line-height: 1.45; word-break: break-word; }
+        .message.user { align-self: flex-end; background: #e9e9ef; color: #1c1c1e; border-bottom-right-radius: 6px; }
+        .message.ai { align-self: flex-start; background: #f8f8fa; border: 1px solid #e9e9ef; border-bottom-left-radius: 6px; color: #1c1c1e; }
+        .message img { max-width: 100%; border-radius: 16px; margin-top: 8px; }
+        .input-area { padding: 12px 16px 20px; background: #ffffff; border-top: 1px solid #e9e9ef; }
+        .input-box { display: flex; align-items: center; gap: 8px; background: #f5f5f7; border-radius: 32px; padding: 6px 12px; border: 1px solid #e9e9ef; }
+        #query { flex: 1; border: none; background: transparent; padding: 12px 8px; font-size: 1rem; outline: none; font-family: 'Inter', sans-serif; }
+        .icon-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 8px; border-radius: 50%; color: #5c5c5e; transition: background 0.1s; }
+        .icon-btn:active { background: #e9e9ef; }
+        .login-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: white; max-width: 400px; width: 100%; border-radius: 32px; padding: 32px 24px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .login-card h1 { font-weight: 700; font-size: 1.8rem; margin-bottom: 8px; }
+        .login-card p { color: #6c6c70; margin-bottom: 24px; }
+        .social-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .social-btn { padding: 12px; border-radius: 48px; border: 1px solid #e9e9ef; background: white; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; }
+        .phone-input { display: flex; gap: 8px; margin-top: 8px; }
+        .phone-input input { flex: 1; padding: 12px; border: 1px solid #e9e9ef; border-radius: 48px; outline: none; }
+        .hidden { display: none; }
+        #file-input { display: none; }
+        .recording { color: #ff3b30 !important; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .typing { display: flex; align-items: center; gap: 4px; }
+        .dot { animation: typingDot 1.4s infinite; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingDot { 0%,100%{opacity:0} 50%{opacity:1} }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h2>ZENITH AI</h2></div>
+    <button class="new-chat-btn" id="newChatBtn">+ Nuevo chat</button>
+    <div id="chat-list"></div>
+</div>
+
+<div class="main">
+    <div class="app-header">
+        <button class="menu-btn" id="menuToggle">☰</button>
+        <div class="user-info">
+            <div class="avatar" id="userAvatar">👤</div>
+            <span id="userName">Usuario</span>
+            <button class="logout-btn" id="logoutBtn" title="Cerrar sesión">🚪</button>
+        </div>
+    </div>
+    <div class="chat-window" id="chatWindow"></div>
+    <div class="input-area">
+        <div class="input-box">
+            <button class="icon-btn" id="attachBtn" title="Subir imagen o archivo">+</button>
+            <input type="text" id="query" placeholder="Pregúntale a ZENITH..." autocomplete="off">
+            <button class="icon-btn" id="micBtn" title="Entrada de voz">🎤</button>
+            <button class="icon-btn" id="sendBtn" style="color:#2c3e66;">➤</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*,text/plain">
+
+<div id="loginModal" class="login-modal">
+    <div class="login-card">
+        <h1>ZENITH</h1>
+        <p>Accede con tu cuenta</p>
+        <div class="social-buttons">
+            <button class="social-btn" id="googleBtn">🔵 Continuar con Google</button>
+            <button class="social-btn" id="facebookBtn">🔷 Continuar con Facebook</button>
+            <button class="social-btn" id="phoneBtn">📱 Continuar con Teléfono</button>
+        </div>
+        <div id="phoneSection" class="hidden">
+            <div class="phone-input">
+                <input type="tel" id="phoneNumber" placeholder="+521234567890">
+                <button class="social-btn" id="sendCodeBtn">Enviar código</button>
+            </div>
+            <div id="codeSection" class="hidden">
+                <input type="text" id="verificationCode" placeholder="Código de 6 dígitos">
+                <button class="social-btn" id="verifyCodeBtn">Verificar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== CONFIG ====================
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_AUTH_DOMAIN",
+        projectId: "TU_PROJECT_ID",
+        storageBucket: "TU_STORAGE_BUCKET",
+        messagingSenderId: "TU_MESSAGING_SENDER_ID",
+        appId: "TU_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const WORKER_URL = 'https://patient-hat-7b16.jacobfontech.workers.dev';
+
+    let currentUser = null, currentChatId = null, conversationHistory = [], recognition = null, isRecording = false, confirmationResult = null, pendingFile = null;
+
+    const loginModal = document.getElementById('loginModal');
+    const sidebar = document.getElementById('sidebar');
+    const chatWindow = document.getElementById('chatWindow');
+    const queryInput = document.getElementById('query');
+    const micBtn = document.getElementById('micBtn');
+    const attachBtn = document.getElementById('attachBtn');
+    const fileInput = document.getElementById('file-input');
+    const sendBtn = document.getElementById('sendBtn');
+    const menuToggle = document.getElementById('menuToggle');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const chatListDiv = document.getElementById('chat-list');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userAvatar = document.getElementById('userAvatar');
+    const userNameSpan = document.getElementById('userName');
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+    }
+
+    function updateUIForUser(user) {
+        if (user) {
+            currentUser = user;
+            loginModal.style.display = 'none';
+            const name = user.displayName || user.phoneNumber || user.email || "Usuario";
+            userNameSpan.textContent = name;
+            userAvatar.textContent = name.charAt(0).toUpperCase();
+            loadChatList();
+            startNewChat();
+        } else {
+            loginModal.style.display = 'flex';
+            chatWindow.innerHTML = '';
+            currentUser = null;
+        }
+    }
+
+    // Autenticación
+    document.getElementById('googleBtn').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(alert);
+    document.getElementById('facebookBtn').onclick = () => auth.signInWithPopup(new firebase.auth.FacebookAuthProvider()).catch(alert);
+    document.getElementById('phoneBtn').onclick = () => document.getElementById('phoneSection').classList.toggle('hidden');
+    document.getElementById('sendCodeBtn').onclick = () => {
+        const num = document.getElementById('phoneNumber').value;
+        if (!num) return alert("Número requerido");
+        const verifier = new firebase.auth.RecaptchaVerifier('sendCodeBtn', {size: 'invisible'});
+        auth.signInWithPhoneNumber(num, verifier).then(r => { confirmationResult = r; document.getElementById('codeSection').classList.remove('hidden'); }).catch(alert);
+    };
+    document.getElementById('verifyCodeBtn').onclick = () => {
+        const code = document.getElementById('verificationCode').value;
+        if (code) confirmationResult.confirm(code).catch(alert);
+    };
+    logoutBtn.onclick = () => auth.signOut().then(() => updateUIForUser(null));
+    auth.onAuthStateChanged(updateUIForUser);
+
+    function getStorageKey() { return `zenith_chats_${currentUser ? currentUser.uid : 'anonymous'}`; }
+
+    function loadChatList() {
+        chatListDiv.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+        Object.keys(history).forEach(id => {
+            const el = document.createElement('div');
+            el.className = 'chat-item';
+            el.textContent = history[id].title || 'Conversación';
+            el.onclick = () => loadChat(id);
+            chatListDiv.appendChild(el);
+        });
+    }
+
+    function startNewChat() {
+        currentChatId = 'chat_' + Date.now();
+        conversationHistory = [];
+        chatWindow.innerHTML = '';
+        addMessage(`Hola ${currentUser?.displayName || 'operador'}, soy ZENITH AI. ¿En qué puedo asistirte hoy?`, 'ai');
+    }
+
+    function saveMessage(text, role, extra = null) {
+        const key = getStorageKey();
+        let history = JSON.parse(localStorage.getItem(key) || '{}');
+        if (!history[currentChatId]) history[currentChatId] = {title: text.substring(0,28)+'…', messages: []};
+        const msg = {role, text};
+        if (extra) msg.extra = extra;
+        history[currentChatId].messages.push(msg);
+        if (role === 'user' && history[currentChatId].messages.length === 1) history[currentChatId].title = text.substring(0,30) + (text.length>30?'…':'');
+        localStorage.setItem(key, JSON.stringify(history));
+        loadChatList();
+    }
+
+    function loadChat(id) {
+        currentChatId = id;
+        const history = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+        const chat = history[id];
+        if (!chat) return;
+        chatWindow.innerHTML = '';
+        conversationHistory = [];
+        chat.messages.forEach(m => {
+            if (m.extra?.type === 'image') addMessageWithImage(m.text, m.role, m.extra.src);
+            else addMessage(m.text, m.role);
+            conversationHistory.push({role: m.role === 'user' ? 'user' : 'assistant', content: m.text});
+        });
+    }
+
+    function addMessage(text, role) {
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+        div.textContent = text;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        return div;
+    }
+
+    function addMessageWithImage(text, role, imgSrc) {
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+        div.innerHTML = text ? `<div>${escapeHtml(text)}</div><img src="${imgSrc}" alt="adjunto">` : `<img src="${imgSrc}" alt="adjunto">`;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Micrófono
+    const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechAPI) {
+        recognition = new SpeechAPI();
+        recognition.lang = 'es-MX';
+        recognition.interimResults = false;
+        recognition.onstart = () => { isRecording = true; micBtn.classList.add('recording'); };
+        recognition.onend = () => { isRecording = false; micBtn.classList.remove('recording'); };
+        recognition.onresult = (e) => {
+            queryInput.value = e.results[0][0].transcript;
+            sendMessage();
+        };
+    } else {
+        micBtn.style.opacity = '0.5';
+        micBtn.title = "Micrófono no soportado";
+    }
+    micBtn.addEventListener('click', () => {
+        if (!recognition) return;
+        if (isRecording) recognition.stop();
+        else recognition.start();
+    });
+
+    // Adjuntar archivos
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        if (file.type.startsWith('image/')) {
+            reader.onload = ev => {
+                pendingFile = {type: 'image', src: ev.target.result, name: file.name};
+                addMessageWithImage(`📷 ${file.name}`, 'user', ev.target.result);
+                saveMessage(`📷 ${file.name}`, 'user', {type: 'image', src: ev.target.result});
+            };
+            reader.readAsDataURL(file);
+        } else if (file.type === 'text/plain') {
+            reader.onload = ev => {
+                pendingFile = {type: 'text', content: ev.target.result};
+                queryInput.value += `\n\n📄 ${file.name}\n${ev.target.result.substring(0,400)}${ev.target.result.length > 400 ? '...' : ''}`;
+            };
+            reader.readAsText(file);
+        }
+        fileInput.value = '';
+    });
+
+    // Enviar al Worker
+    async function sendMessage() {
+        let text = queryInput.value.trim();
+        if (!text && !pendingFile) return;
+
+        if (pendingFile && pendingFile.type === 'image' && !text) text = 'Analiza esta imagen con detalle.';
+
+        if (pendingFile && pendingFile.type === 'image') {
+            conversationHistory.push({role: 'user', content: text, image_base64: pendingFile.src});
+        } else {
+            addMessage(text, 'user');
+            saveMessage(text, 'user');
+            conversationHistory.push({role: 'user', content: text});
+        }
+
+        queryInput.value = '';
+        const fileToSend = pendingFile;
+        pendingFile = null;
+
+        const thinking = addMessage('ZENITH está procesando...', 'ai');
+        thinking.classList.add('typing');
+
+        try {
+            const res = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    messages: conversationHistory,
+                    userId: currentUser ? currentUser.uid : 'anonymous',
+                    file: fileToSend
+                })
+            });
+            const data = await res.json();
+            const aiReply = data.reply || data.response || data.choices?.[0]?.message?.content || "Respuesta recibida";
+
+            thinking.classList.remove('typing');
+            thinking.textContent = aiReply;
+
+            saveMessage(aiReply, 'ai');
+            conversationHistory.push({role: 'assistant', content: aiReply});
+        } catch (err) {
+            thinking.textContent = '⚠️ Error de conexión. Intenta de nuevo.';
+            console.error(err);
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    queryInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    newChatBtn.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        startNewChat();
+    });
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+
+    console.log('%c🚀 ZENITH AI – Versión FINAL correcta y consolidada', 'color:#2c3e66; font-weight:700');
+</script>
+</body>
+</html>

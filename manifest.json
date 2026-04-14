@@ -1,0 +1,15 @@
+{
+  "name": "ZENITH AI",
+  "short_name": "ZENITH",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/8649/8649595.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
