@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ZENITH AI · Asistente Cognitivo</title>
+    <meta name="description" content="ZENITH AI - Asistente Cognitivo creado por J-BOSS">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e66">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,8 +40,10 @@
         .input-area { padding: 12px 16px 20px; background: #ffffff; border-top: 1px solid #e9e9ef; }
         .input-box { display: flex; align-items: center; gap: 8px; background: #f5f5f7; border-radius: 32px; padding: 6px 12px; border: 1px solid #e9e9ef; }
         #query { flex: 1; border: none; background: transparent; padding: 12px 8px; font-size: 1rem; outline: none; font-family: 'Inter', sans-serif; }
+        #query:disabled { opacity: 0.5; }
         .icon-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 8px; border-radius: 50%; color: #5c5c5e; transition: background 0.1s; }
         .icon-btn:active { background: #e9e9ef; }
+        .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .login-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; max-width: 400px; width: 100%; border-radius: 32px; padding: 32px 24px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
         .login-card h1 { font-weight: 700; font-size: 1.8rem; margin-bottom: 8px; }
@@ -123,6 +126,8 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    
+    // Enlace directo al Cerebro de Cloudflare
     const WORKER_URL = 'https://patient-hat-7b16.jacobfontech.workers.dev';
 
     let currentUser = null, currentChatId = null, conversationHistory = [], recognition = null, isRecording = false, confirmationResult = null, pendingFile = null;
@@ -197,7 +202,10 @@
         currentChatId = 'chat_' + Date.now();
         conversationHistory = [];
         chatWindow.innerHTML = '';
-        addMessage(`Hola ${currentUser?.displayName || 'operador'}, soy ZENITH AI. ¿En qué puedo asistirte hoy?`, 'ai');
+        
+        // ¡Mejora dinámica de Grok aplicada! Saluda a quien inicie sesión.
+        const userNameDisplay = currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'usuario');
+        addMessage(`Hola ${userNameDisplay}, soy ZENITH AI. ¿En qué puedo asistirte hoy?`, 'ai');
     }
 
     function saveMessage(text, role, extra = null) {
@@ -304,6 +312,9 @@
         const fileToSend = pendingFile;
         pendingFile = null;
 
+        queryInput.disabled = true;
+        sendBtn.disabled = true;
+
         const thinking = addMessage('ZENITH está procesando...', 'ai');
         thinking.classList.add('typing');
 
@@ -317,17 +328,36 @@
                     file: fileToSend
                 })
             });
+
+            // ¡Mejora de lectura de errores profundos aplicada!
+            if (!res.ok) {
+                let errorMsg = `Error HTTP: ${res.status}`;
+                try {
+                    const errorData = await res.json();
+                    errorMsg = errorData.error || errorData.message || errorMsg;
+                } catch (e) {}
+                throw new Error(errorMsg);
+            }
+
             const data = await res.json();
-            const aiReply = data.reply || data.response || data.choices?.[0]?.message?.content || "Respuesta recibida";
+            const aiReply = data.reply || data.message || "Ocurrió un error leyendo la respuesta de la IA.";
+            
             thinking.classList.remove('typing');
             thinking.textContent = aiReply;
             saveMessage(aiReply, 'ai');
             conversationHistory.push({role: 'assistant', content: aiReply});
         } catch (err) {
-            thinking.textContent = '⚠️ Error de conexión. Intenta de nuevo.';
+            thinking.classList.remove('typing');
+            thinking.textContent = `⚠️ Sistema: ${err.message || 'Error de conexión con la IA.'}`;
             console.error(err);
+        } finally {
+            queryInput.disabled = false;
+            sendBtn.disabled = false;
+            queryInput.focus();
+            
+            // ¡El scroll automático al final asegurado!
+            chatWindow.scrollTop = chatWindow.scrollHeight;
         }
-        chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
     sendBtn.addEventListener('click', sendMessage);
@@ -339,7 +369,7 @@
         window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
     }
 
-    console.log('%c🚀 ZENITH AI – Listo para producción', 'color:#2c3e66; font-weight:700');
+        console.log('%c🚀 ZENITH AI – Listo para producción', 'color:#2c3e66; font-weight:700');
 </script>
 </body>
 </html>
