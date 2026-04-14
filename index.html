@@ -113,14 +113,13 @@
 </div>
 
 <script>
-    // ==================== CONFIG ====================
     const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "TU_AUTH_DOMAIN",
-        projectId: "TU_PROJECT_ID",
-        storageBucket: "TU_STORAGE_BUCKET",
-        messagingSenderId: "TU_MESSAGING_SENDER_ID",
-        appId: "TU_APP_ID"
+        apiKey: "AIzaSyCxCFZF01QWVuwU-NBDAV_SJgALaDVkGvU",
+        authDomain: "zenith-ai-3b6f2.firebaseapp.com",
+        projectId: "zenith-ai-3b6f2",
+        storageBucket: "zenith-ai-3b6f2.appspot.com",
+        messagingSenderId: "610202193298",
+        appId: "1:610202193298:web:066b4fe461daa7fbda854b"
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -164,7 +163,6 @@
         }
     }
 
-    // Autenticación
     document.getElementById('googleBtn').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(alert);
     document.getElementById('facebookBtn').onclick = () => auth.signInWithPopup(new firebase.auth.FacebookAuthProvider()).catch(alert);
     document.getElementById('phoneBtn').onclick = () => document.getElementById('phoneSection').classList.toggle('hidden');
@@ -245,7 +243,6 @@
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // Micrófono
     const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechAPI) {
         recognition = new SpeechAPI();
@@ -267,7 +264,6 @@
         else recognition.start();
     });
 
-    // Adjuntar archivos
     attachBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -290,7 +286,6 @@
         fileInput.value = '';
     });
 
-    // Enviar al Worker
     async function sendMessage() {
         let text = queryInput.value.trim();
         if (!text && !pendingFile) return;
@@ -324,10 +319,8 @@
             });
             const data = await res.json();
             const aiReply = data.reply || data.response || data.choices?.[0]?.message?.content || "Respuesta recibida";
-
             thinking.classList.remove('typing');
             thinking.textContent = aiReply;
-
             saveMessage(aiReply, 'ai');
             conversationHistory.push({role: 'assistant', content: aiReply});
         } catch (err) {
@@ -339,19 +332,14 @@
 
     sendBtn.addEventListener('click', sendMessage);
     queryInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
-
     menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-    newChatBtn.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        startNewChat();
-    });
+    newChatBtn.addEventListener('click', () => { sidebar.classList.remove('open'); startNewChat(); });
 
-    // PWA Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
     }
 
-    console.log('%c🚀 ZENITH AI – Versión FINAL correcta y consolidada', 'color:#2c3e66; font-weight:700');
+    console.log('%c🚀 ZENITH AI – Listo para producción', 'color:#2c3e66; font-weight:700');
 </script>
 </body>
 </html>
