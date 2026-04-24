@@ -2032,8 +2032,8 @@
 
     if (mins < 1)    return 'Ahora';
     if (mins < 60)   return `Hace ${mins}m`;
-    if (hours < 24)  return `Hace $${hours}h`;
-    if (days < 7)    return `Hace $${days}d`;
+    if (hours < 24)  return `Hace ${hours}h`;
+    if (days < 7)    return `Hace ${days}d`;
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   }
 
@@ -2050,7 +2050,7 @@
    * Genera un ID único local (para uso antes de guardar en Firestore).
    */
   function generateLocalId() {
-    return `local_$${Date.now()}_$${Math.random().toString(36).substr(2, 9)}`;
+    return `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
@@ -2356,7 +2356,7 @@
 
     const avatarEl = document.getElementById('sidebar-avatar');
     if (user.photoURL) {
-      avatarEl.innerHTML = `<img src="$${user.photoURL}" alt="$${escapeHtml(name)}" referrerpolicy="no-referrer" />`;
+      avatarEl.innerHTML = `<img src="${user.photoURL}" alt="${escapeHtml(name)}" referrerpolicy="no-referrer" />`;
     } else {
       avatarEl.textContent = initials;
     }
