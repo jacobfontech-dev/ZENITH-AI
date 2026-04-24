@@ -2238,6 +2238,59 @@
 
   document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
   document.getElementById('btn-register-google').addEventListener('click', loginWithGoogle);
+    // ==================== FACEBOOK LOGIN ====================
+async function loginWithFacebook() {
+  const provider = new firebase.auth.FacebookAuthProvider();
+  try {
+    await auth.signInWithPopup(provider);
+  } catch (error) {
+    document.getElementById('login-error').textContent = error.message;
+  }
+}
+document.getElementById('btn-login-facebook')
+  .addEventListener('click', loginWithFacebook);
+
+// ==================== PHONE LOGIN ====================
+let confirmationResult = null;
+
+function setupRecaptcha() {
+  if (!window.recaptchaVerifier) {
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'normal',
+      callback: () => {
+        document.getElementById('btn-send-otp').disabled = false;
+      }
+    });
+    window.recaptchaVerifier.render();
+  }
+}
+
+document.getElementById('btn-send-otp').addEventListener('click', async () => {
+  const phone = document.getElementById('phone-input').value.trim();
+  const errorEl = document.getElementById('phone-error');
+  errorEl.textContent = '';
+  if (!phone) { errorEl.textContent = 'Ingresa tu número.'; return; }
+  setupRecaptcha();
+  try {
+    confirmationResult = await auth.signInWithPhoneNumber(phone, window.recaptchaVerifier);
+    document.getElementById('otp-section').classList.remove('hidden');
+  } catch (e) {
+    errorEl.textContent = e.message;
+    window.recaptchaVerifier = null;
+  }
+});
+
+document.getElementById('btn-verify-otp').addEventListener('click', async () => {
+  const code = document.getElementById('otp-input').value.trim();
+  const errorEl = document.getElementById('phone-error');
+  errorEl.textContent = '';
+  if (!code) { errorEl.textContent = 'Ingresa el código.'; return; }
+  try {
+    await confirmationResult.confirm(code);
+  } catch (e) {
+    errorEl.textContent = 'Código incorrecto o expirado.';
+  }
+});
 
   /* --- Registro con Email/Password --- */
   document.getElementById('btn-register').addEventListener('click', async () => {
