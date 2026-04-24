@@ -1,375 +1,3507 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ZENITH AI · Asistente Cognitivo</title>
-    <meta name="description" content="ZENITH AI - Asistente Cognitivo creado por J-BOSS">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c3e66">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: #f5f5f7; color: #1c1c1e; height: 100vh; overflow: hidden; position: relative; }
-        body::before { content: "ZENITH AI"; position: fixed; bottom: 20px; right: 20px; font-size: 3rem; font-weight: 800; color: rgba(0,0,0,0.03); pointer-events: none; z-index: 0; letter-spacing: -2px; transform: rotate(-5deg); }
-        .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: rgba(255,255,255,0.96); backdrop-filter: blur(20px); border-right: 1px solid rgba(0,0,0,0.08); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1); z-index: 30; display: flex; flex-direction: column; box-shadow: 2px 0 12px rgba(0,0,0,0.05); }
-        .sidebar.open { transform: translateX(0); }
-        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .sidebar-header h2 { font-weight: 600; font-size: 1.3rem; background: linear-gradient(135deg, #1e1e2f, #2c3e66); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .new-chat-btn { margin: 16px 20px; padding: 12px; background: #e9e9ef; border: none; border-radius: 32px; font-weight: 500; color: #1c1c1e; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: 0.2s; }
-        .new-chat-btn:active { background: #d9d9e0; }
-        #chat-list { flex: 1; overflow-y: auto; padding: 0 12px; }
-        .chat-item { padding: 12px 14px; border-radius: 14px; margin-bottom: 6px; cursor: pointer; font-size: 0.85rem; color: #2c2c2e; transition: background 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .chat-item:active, .chat-item.active { background: #e9e9ef; }
-        .main { display: flex; flex-direction: column; height: 100%; position: relative; z-index: 2; background: #ffffff; }
-        .app-header { padding: 16px 20px; border-bottom: 1px solid #e9e9ef; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
-        .menu-btn { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #1c1c1e; padding: 4px; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 36px; height: 36px; background: #e9e9ef; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #2c3e66; }
-        .logout-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 6px; }
-        .chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #ffffff; }
-        .message { max-width: 85%; padding: 12px 18px; border-radius: 24px; font-size: 0.95rem; line-height: 1.45; word-break: break-word; }
-        .message.user { align-self: flex-end; background: #e9e9ef; color: #1c1c1e; border-bottom-right-radius: 6px; }
-        .message.ai { align-self: flex-start; background: #f8f8fa; border: 1px solid #e9e9ef; border-bottom-left-radius: 6px; color: #1c1c1e; }
-        .message img { max-width: 100%; border-radius: 16px; margin-top: 8px; }
-        .input-area { padding: 12px 16px 20px; background: #ffffff; border-top: 1px solid #e9e9ef; }
-        .input-box { display: flex; align-items: center; gap: 8px; background: #f5f5f7; border-radius: 32px; padding: 6px 12px; border: 1px solid #e9e9ef; }
-        #query { flex: 1; border: none; background: transparent; padding: 12px 8px; font-size: 1rem; outline: none; font-family: 'Inter', sans-serif; }
-        #query:disabled { opacity: 0.5; }
-        .icon-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 8px; border-radius: 50%; color: #5c5c5e; transition: background 0.1s; }
-        .icon-btn:active { background: #e9e9ef; }
-        .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .login-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { background: white; max-width: 400px; width: 100%; border-radius: 32px; padding: 32px 24px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .login-card h1 { font-weight: 700; font-size: 1.8rem; margin-bottom: 8px; }
-        .login-card p { color: #6c6c70; margin-bottom: 24px; }
-        .social-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .social-btn { padding: 12px; border-radius: 48px; border: 1px solid #e9e9ef; background: white; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; }
-        .phone-input { display: flex; gap: 8px; margin-top: 8px; }
-        .phone-input input { flex: 1; padding: 12px; border: 1px solid #e9e9ef; border-radius: 48px; outline: none; }
-        .hidden { display: none; }
-        #file-input { display: none; }
-        .recording { color: #ff3b30 !important; animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .typing { display: flex; align-items: center; gap: 4px; }
-        .dot { animation: typingDot 1.4s infinite; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typingDot { 0%,100%{opacity:0} 50%{opacity:1} }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZENITH AI</title>
+
+  <!-- ============================================================
+       FIREBASE SDKs (v9 compat mode para uso global en browser)
+  ============================================================ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- ============================================================
+       MARKED.JS — Para renderizar Markdown en respuestas de la IA
+  ============================================================ -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- ============================================================
+       HIGHLIGHT.JS — Syntax highlighting en bloques de código
+  ============================================================ -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <style>
+    /* ============================================================
+       RESET & VARIABLES GLOBALES
+    ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* Paleta principal */
+      --bg-primary:        #0a0a0f;
+      --bg-secondary:      #111118;
+      --bg-tertiary:       #1a1a24;
+      --bg-card:           #16161f;
+      --bg-hover:          #1e1e2a;
+      --bg-input:          #12121a;
+
+      /* Acentos */
+      --accent-primary:    #7c6af7;
+      --accent-secondary:  #5b4fcf;
+      --accent-glow:       rgba(124, 106, 247, 0.35);
+      --accent-glow-soft:  rgba(124, 106, 247, 0.12);
+
+      /* Texto */
+      --text-primary:      #e8e8f0;
+      --text-secondary:    #9090a8;
+      --text-muted:        #5a5a72;
+      --text-inverse:      #0a0a0f;
+
+      /* Bordes */
+      --border-primary:    rgba(124, 106, 247, 0.2);
+      --border-secondary:  rgba(255, 255, 255, 0.06);
+      --border-input:      rgba(124, 106, 247, 0.3);
+
+      /* Estados */
+      --success:           #4ade80;
+      --warning:           #fbbf24;
+      --error:             #f87171;
+      --info:              #60a5fa;
+
+      /* Dimensiones */
+      --sidebar-width:     280px;
+      --header-height:     60px;
+      --input-area-height: 120px;
+      --border-radius-sm:  6px;
+      --border-radius-md:  12px;
+      --border-radius-lg:  20px;
+      --border-radius-xl:  28px;
+
+      /* Tipografía */
+      --font-main:         'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono:         'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+      /* Transiciones */
+      --transition-fast:   0.15s ease;
+      --transition-mid:    0.25s ease;
+      --transition-slow:   0.4s ease;
+
+      /* Sombras */
+      --shadow-sm:         0 2px 8px rgba(0,0,0,0.4);
+      --shadow-md:         0 4px 20px rgba(0,0,0,0.5);
+      --shadow-lg:         0 8px 40px rgba(0,0,0,0.6);
+      --shadow-glow:       0 0 30px var(--accent-glow);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-main);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================================
+       SCROLLBAR PERSONALIZADO
+    ============================================================ */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-primary);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+    /* ============================================================
+       UTILIDADES
+    ============================================================ */
+    .hidden   { display: none !important; }
+    .sr-only  {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    .flex     { display: flex; }
+    .flex-col { display: flex; flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .gap-2    { gap: 8px; }
+    .gap-3    { gap: 12px; }
+    .w-full   { width: 100%; }
+    .truncate {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* ============================================================
+       ANIMACIONES GLOBALES
+    ============================================================ */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+    @keyframes ripple {
+      0%   { transform: scale(0); opacity: 0.6; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 10px var(--accent-glow); }
+      50%       { box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow-soft); }
+    }
+    @keyframes micPulse {
+      0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(248,113,113,0.6); }
+      70%  { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(248,113,113,0); }
+      100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(248,113,113,0); }
+    }
+    @keyframes typingDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40%            { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ============================================================
+       PANTALLA DE CARGA INICIAL (SPLASH)
+    ============================================================ */#splash-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #splash-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .splash-logo {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 60%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 32px;
+      animation: fadeInScale 0.6s ease forwards;
+    }
+    .splash-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border-secondary);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* ============================================================
+       PANTALLA DE LOGIN
+    ============================================================ */
+    #auth-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.4s ease;
+    }
+
+    /* Fondo animado con partículas CSS */
+    #auth-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 40%, rgba(124,106,247,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 70%, rgba(91,79,207,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .auth-container {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      animation: fadeInScale 0.5s ease;
+    }
+
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--border-radius-xl);
+      padding: 48px 40px;
+      box-shadow: var(--shadow-lg), 0 0 60px rgba(124,106,247,0.08);
+    }
+
+    .auth-logo-wrapper {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .auth-logo {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 55%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline-block;
+    }
+    .auth-logo-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      margin-left: 4px;
+      vertical-align: super;
+      animation: glowPulse 2s ease infinite;
+    }
+
+    /* Tabs de autenticación */
+    .auth-tabs {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 4px;
+      margin-bottom: 28px;
+      border: 1px solid var(--border-secondary);
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: all var(--transition-mid);
+      user-select: none;
+    }
+    .auth-tab.active {
+      background: var(--accent-primary);
+      color: #fff;
+      box-shadow: 0 2px 12px var(--accent-glow);
+    }
+    .auth-tab:not(.active):hover { color: var(--text-primary); }
+
+    /* Paneles de formulario */
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    /* Campos de formulario */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .form-input {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: var(--font-main);
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .form-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-glow-soft);
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input.error { border-color: var(--error); }
+
+    /* Botones de autenticación */
+    .btn-auth-primary {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border: none;
+      border-radius: var(--border-radius-md);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition-mid);
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.03em;
+      margin-top: 8px;
+    }
+    .btn-auth-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px var(--accent-glow);
+    }
+    .btn-auth-primary:active { transform: translateY(0); }
+    .btn-auth-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }/* Ripple effect en botones */
+    .btn-auth-primary .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      width: 100px; height: 100px;
+      margin-top: -50px; margin-left: -50px;
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .auth-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-secondary);
+    }
+    .auth-divider-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .btn-google {
+      width: 100%;
+      padding: 13px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all var(--transition-mid);
+    }
+    .btn-google:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-primary);
+      transform: translateY(-1px);
+    }
+    .btn-google svg { flex-shrink: 0; }
+
+    /* Mensajes de error en auth */
+    .auth-error-msg {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: var(--border-radius-sm);
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--error);
+      margin-top: 12px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .auth-error-msg.visible { display: block; }
+
+    /* Spinner dentro de botón */
+    .btn-spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ============================================================
+       LAYOUT PRINCIPAL DE LA APP
+    ============================================================ */
+    #app-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      background: var(--bg-primary);
+    }
+
+    /* ============================================================
+       SIDEBAR
+    ============================================================ */
+    #sidebar {
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-secondary);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform var(--transition-mid), width var(--transition-mid);
+      z-index: 100;
+    }
+    #sidebar.collapsed {
+      width: 0;
+      transform: translateX(-100%);
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, #fff, var(--accent-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn-new-chat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: calc(100% - 32px);
+      margin: 12px 16px;
+      padding: 11px 16px;
+      background: var(--accent-glow-soft);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--border-radius-md);
+      color: var(--accent-primary);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-mid);
+      flex-shrink: 0;
+    }
+    .btn-new-chat:hover {
+      background: var(--accent-glow);
+      box-shadow: 0 0 20px var(--accent-glow-soft);
+    }
+
+    /* Lista de chats */
+    .sidebar-section-label {
+      padding: 8px 16px 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    #chat-history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px;
+    }
+
+    .chat-history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      position: relative;
+      group: true;
+      animation: slideInLeft 0.2s ease;
+    }
+    .chat-history-item:hover { background: var(--bg-hover); }
+    .chat-history-item.active {
+      background: var(--accent-glow-soft);
+      border: 1px solid var(--border-primary);
+    }
+    .chat-history-item-icon {
+      width: 28px; height: 28px;
+      background: var(--bg-tertiary);
+      border-radius: var(--border-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+    }
+    .chat-history-item-content { flex: 1; min-width: 0; }
+    .chat-history-item-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chat-history-item.active .chat-history-item-title { color: var(--accent-primary); }
+    .chat-history-item-date {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .chat-history-item-delete {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .chat-history-item:hover .chat-history-item-delete { opacity: 1; }
+    .chat-history-item-delete:hover { color: var(--error); background: rgba(248,113,113,0.1); }
+
+    /* Estado vacío del historial */
+    .history-empty {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .history-empty-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    /* Skeleton loader para historial */
+    .history-skeleton {
+      padding: 4px 8px;
+    }
+    .skeleton-item {
+      height: 52px;
+      background: linear-gradient(90deg,
+        var(--bg-tertiary) 25%,
+        var(--bg-hover) 50%,
+        var(--bg-tertiary) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 6px;
+    }/* Perfil de usuario en sidebar */
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-secondary);
+      flex-shrink: 0;
+    }
+    .user-profile-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      position: relative;
+    }
+    .user-profile-card:hover { background: var(--bg-hover); }
+    .user-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .user-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-status {
+      font-size: 0.72rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .user-status::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Menú de usuario */
+    .user-menu {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0; right: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 6px;
+      box-shadow: var(--shadow-lg);
+      z-index: 200;
+      animation: fadeIn 0.2s ease;
+    }
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+    }
+    .user-menu-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .user-menu-item.danger:hover { background: rgba(248,113,113,0.1); color: var(--error); }
+
+    /* ============================================================
+       ÁREA PRINCIPAL DE CHAT
+    ============================================================ */
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      height: 100%;
+    }
+
+    /* Header del chat */
+    #chat-header {
+      height: var(--header-height);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-secondary);
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-toggle-sidebar {
+      width: 36px; height: 36px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .btn-toggle-sidebar:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .chat-title-display {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-btn {
+      width: 36px; height: 36px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .header-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* Indicador de modelo */
+    .model-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--accent-glow-soft);
+      border: 1px solid var(--border-primary);
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-primary);
+    }
+    .model-badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    /* ============================================================
+       ÁREA DE MENSAJES
+    ============================================================ */#messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 0;
+      scroll-behavior: smooth;
+    }
+
+    /* Pantalla de bienvenida */
+    #welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 40px 20px;
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+    .welcome-logo {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 55%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .welcome-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      max-width: 400px;
+      line-height: 1.6;
+    }
+    .welcome-suggestions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      max-width: 560px;
+      width: 100%;
+    }
+    .suggestion-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: all var(--transition-mid);
+    }
+    .suggestion-card:hover {
+      border-color: var(--border-primary);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .suggestion-card-icon { font-size: 1.3rem; margin-bottom: 8px; }
+    .suggestion-card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .suggestion-card-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Mensajes individuales */
+    .message-wrapper {
+      padding: 6px 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    .message-wrapper:hover .message-actions { opacity: 1; }
+
+    .message-row {
+      display: flex;
+      gap: 14px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .message-row.user-row { flex-direction: row-reverse; }
+
+    .message-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .message-avatar.ai-avatar {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: #fff;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+    }
+    .message-avatar.user-avatar-msg {
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+      color: #fff;
+      overflow: hidden;
+    }
+    .message-avatar.user-avatar-msg img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    .message-content-wrapper { flex: 1; min-width: 0; }
+
+    .message-sender-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .message-row.user-row .message-sender-name { text-align: right; }
+
+    .message-bubble {
+      padding: 14px 18px;
+      border-radius: var(--border-radius-lg);
+      font-size: 0.925rem;
+      line-height: 1.7;
+      word-break: break-word;
+      position: relative;
+    }
+    .message-bubble.ai-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 4px var(--border-radius-lg) var(--border-radius-lg) var(--border-radius-lg);
+      color: var(--text-primary);
+    }
+    .message-bubble.user-bubble {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: var(--border-radius-lg) 4px var(--border-radius-lg) var(--border-radius-lg);
+      color: #fff;
+      margin-left: auto;
+      max-width: 85%;
+    }
+
+    /* Cursor de streaming */
+    .streaming-cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--accent-primary);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    /* Acciones de mensaje */
+    .message-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .message-row.user-row .message-actions { justify-content: flex-end; }
+    .msg-action-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--border-radius-sm);
+      font-size: 0.75rem;
+      display: flex; align-items: center; gap: 4px;
+      transition: all var(--transition-fast);
+    }
+    .msg-action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* Timestamp */
+    .message-timestamp {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .message-row.user-row .message-timestamp { text-align: right; }
+
+    /* Indicador de escritura (typing) */
+    #typing-indicator {
+      padding: 6px 24px;
+    }
+    .typing-row {
+      display: flex;
+      gap: 14px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .typing-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 4px var(--border-radius-lg) var(--border-radius-lg) var(--border-radius-lg);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .typing-dot {
+      width: 7px; height: 7px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      animation: typingDot 1.4s ease infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Markdown rendering */
+    .message-bubble.ai-bubble h1,
+    .message-bubble.ai-bubble h2,
+    .message-bubble.ai-bubble h3 {
+      color: var(--text-primary);
+      margin: 16px 0 8px;
+      font-weight: 700;
+    }
+    .message-bubble.ai-bubble h1 { font-size: 1.3rem; }
+    .message-bubble.ai-bubble h2 { font-size: 1.15rem; }
+    .message-bubble.ai-bubble h3 { font-size: 1rem; }
+    .message-bubble.ai-bubble p { margin-bottom: 10px; }
+    .message-bubble.ai-bubble p:last-child { margin-bottom: 0; }
+    .message-bubble.ai-bubble ul,
+    .message-bubble.ai-bubble ol {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+    .message-bubble.ai-bubble li { margin-bottom: 4px; }
+    .message-bubble.ai-bubble code {
+      background: rgba(124,106,247,0.15);
+      border: 1px solid rgba(124,106,247,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      color: #a78bfa;
+    }.message-bubble.ai-bubble pre {
+      background: #0d0d14;
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+      position: relative;
+    }
+    .message-bubble.ai-bubble pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+      font-size: 0.875rem;
+    }
+    .code-copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-sm);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .code-copy-btn:hover { color: var(--text-primary); border-color: var(--border-primary); }
+    .message-bubble.ai-bubble blockquote {
+      border-left: 3px solid var(--accent-primary);
+      padding-left: 14px;
+      color: var(--text-secondary);
+      margin: 10px 0;
+      font-style: italic;
+    }
+    .message-bubble.ai-bubble table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 0.875rem;
+    }
+    .message-bubble.ai-bubble th,
+    .message-bubble.ai-bubble td {
+      padding: 8px 12px;
+      border: 1px solid var(--border-secondary);
+      text-align: left;
+    }
+    .message-bubble.ai-bubble th {
+      background: var(--bg-tertiary);
+      font-weight: 600;
+    }
+    .message-bubble.ai-bubble a {
+      color: var(--accent-primary);
+      text-decoration: none;
+    }
+    .message-bubble.ai-bubble a:hover { text-decoration: underline; }
+    .message-bubble.ai-bubble strong { color: #fff; font-weight: 700; }
+    .message-bubble.ai-bubble em { color: var(--text-secondary); }
+    .message-bubble.ai-bubble hr {
+      border: none;
+      border-top: 1px solid var(--border-secondary);
+      margin: 16px 0;
+    }
+
+    /* ============================================================
+       ÁREA DE INPUT
+    ============================================================ */
+    #input-area {
+      padding: 16px 24px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-secondary);
+      flex-shrink: 0;
+    }
+
+    .input-wrapper {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .input-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border-input);
+      border-radius: var(--border-radius-xl);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .input-box:focus-within {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-glow-soft);
+    }
+
+    #message-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: var(--font-main);
+      resize: none;
+      max-height: 180px;
+      min-height: 24px;
+      line-height: 1.6;
+      overflow-y: auto;
+    }
+    #message-input::placeholder { color: var(--text-muted); }
+
+    .input-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .input-btn {
+      width: 36px; height: 36px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .input-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .input-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Botón de micrófono */
+    #mic-btn { position: relative; }
+    #mic-btn.listening {
+      color: var(--error);
+      animation: micPulse 1.5s ease infinite;
+    }
+    #mic-btn.listening::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 2px solid var(--error);
+      border-radius: 50%;
+      animation: ripple 1.5s ease infinite;
+    }
+
+    /* Botón de enviar */
+    #send-btn {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-mid);
+      flex-shrink: 0;
+    }
+    #send-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    #send-btn:active { transform: scale(0.95); }
+    #send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Contador de caracteres y estado */
+    .input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 4px 0;
+    }
+    .input-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .char-counter {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .char-counter.warning { color: var(--warning); }
+    .char-counter.danger  { color: var(--error); }
+
+    /* ============================================================
+       TOAST NOTIFICATIONS
+    ============================================================ */#toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 280px;
+      max-width: 380px;
+      box-shadow: var(--shadow-lg);
+      animation: slideInRight 0.3s ease;
+      pointer-events: all;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .toast.removing {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .toast-content { flex: 1; }
+    .toast-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .toast-message {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error   { border-left: 3px solid var(--error); }
+    .toast.warning { border-left: 3px solid var(--warning); }
+    .toast.info    { border-left: 3px solid var(--info); }
+
+    /* ============================================================
+       MODAL DE CONFIRMACIÓN
+    ============================================================ */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 5000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-xl);
+      padding: 32px;
+      max-width: 380px;
+      width: calc(100% - 40px);
+      box-shadow: var(--shadow-lg);
+      animation: fadeInScale 0.25s ease;
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .modal-message {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn-modal-cancel {
+      padding: 10px 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--border-radius-md);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .btn-modal-cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .btn-modal-confirm {
+      padding: 10px 20px;
+      background: var(--error);
+      border: none;
+      border-radius: var(--border-radius-md);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .btn-modal-confirm:hover { opacity: 0.85; }
+
+    /* ============================================================
+       BANNER DE ESTADO DE CONEXIÓN
+    ============================================================ */
+    #connection-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--error);
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      z-index: 9997;
+      transform: translateY(-100%);
+      transition: transform var(--transition-mid);
+    }
+    #connection-banner.visible { transform: translateY(0); }
+
+    /* ============================================================
+       INDICADOR DE VOZ (overlay)
+    ============================================================ */
+    #voice-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 4000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    .voice-rings {
+      position: relative;
+      width: 100px; height: 100px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .voice-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid var(--error);
+      animation: ripple 2s ease infinite;
+    }
+    .voice-ring:nth-child(1) { width: 100%; height: 100%; animation-delay: 0s; }
+    .voice-ring:nth-child(2) { width: 75%;  height: 75%;  animation-delay: 0.4s; }
+    .voice-ring:nth-child(3) { width: 50%;  height: 50%;  animation-delay: 0.8s; }
+    .voice-mic-icon {
+      width: 60px; height: 60px;
+      background: var(--error);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1;
+      box-shadow: 0 0 30px rgba(248,113,113,0.5);
+    }
+    .voice-status-text {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .voice-transcript-preview {
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      font-weight: 600;
+      max-width: 400px;
+      text-align: center;
+      min-height: 28px;
+    }
+    .btn-voice-cancel {
+      padding: 10px 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .btn-voice-cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* ============================================================
+       RESPONSIVE — MOBILE
+    ============================================================ */
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 300;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+      }
+      #sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      .sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 299;
+        animation: fadeIn 0.2s ease;
+      }
+      .welcome-suggestions {
+        grid-template-columns: 1fr;
+      }
+      .message-wrapper { padding: 6px 12px; }
+      #input-area { padding: 12px 12px 16px; }
+      .auth-card { padding: 36px 24px; }
+    }
+
+    /* ============================================================
+       SCROLLBAR EN MENSAJES
+    ============================================================ */
+    #messages-container::-webkit-scrollbar { width: 4px; }
+    #messages-container::-webkit-scrollbar-thumb {
+      background: var(--border-secondary);
+      border-radius: 10px;
+    }
+
+    /* ============================================================
+       ESTADO DE ERROR EN MENSAJE
+    ============================================================ */
+    .message-error-bubble {
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: var(--border-radius-md);
+      padding: 12px 16px;
+      color: var(--error);
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-retry {
+      background: none;
+      border: 1px solid var(--error);
+      border-radius: var(--border-radius-sm);
+      color: var(--error);
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      margin-left: auto;
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .btn-retry:hover { background: rgba(248,113,113,0.1); }
+
+    /* ============================================================
+       BOTÓN SCROLL TO BOTTOM
+    ============================================================ */#scroll-to-bottom {
+      position: absolute;
+      bottom: 140px;
+      right: 24px;
+      width: 36px; height: 36px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 50%;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-md);
+      transition: all var(--transition-fast);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    #scroll-to-bottom.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #scroll-to-bottom:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* ============================================================
+       STOP GENERATION BUTTON
+    ============================================================ */
+    #stop-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 auto 12px;
+      padding: 8px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      max-width: 820px;
+      width: fit-content;
+    }
+    #stop-btn:hover { border-color: var(--error); color: var(--error); }
+    #stop-btn .stop-icon {
+      width: 10px; height: 10px;
+      background: currentColor;
+      border-radius: 2px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header"><h2>ZENITH AI</h2></div>
-    <button class="new-chat-btn" id="newChatBtn">+ Nuevo chat</button>
-    <div id="chat-list"></div>
-</div>
+  <!-- ============================================================
+       SPLASH SCREEN
+  ============================================================ -->
+  <div id="splash-screen">
+    <div class="splash-logo">ZENITH AI</div>
+    <div class="splash-spinner"></div>
+  </div>
 
-<div class="main">
-    <div class="app-header">
-        <button class="menu-btn" id="menuToggle">☰</button>
-        <div class="user-info">
-            <div class="avatar" id="userAvatar">👤</div>
-            <span id="userName">Usuario</span>
-            <button class="logout-btn" id="logoutBtn" title="Cerrar sesión">🚪</button>
-        </div>
+  <!-- ============================================================
+       BANNER DE CONEXIÓN
+  ============================================================ -->
+  <div id="connection-banner">
+    ⚠️ Sin conexión a internet — Reconectando...
+  </div>
+
+  <!-- ============================================================
+       TOAST CONTAINER
+  ============================================================ -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ============================================================
+       MODAL DE CONFIRMACIÓN
+  ============================================================ -->
+  <div id="modal-overlay" class="hidden">
+    <div class="modal-card">
+      <div class="modal-title" id="modal-title">Confirmar acción</div>
+      <div class="modal-message" id="modal-message">¿Estás seguro?</div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modal-cancel-btn">Cancelar</button>
+        <button class="btn-modal-confirm" id="modal-confirm-btn">Confirmar</button>
+      </div>
     </div>
-    <div class="chat-window" id="chatWindow"></div>
-    <div class="input-area">
-        <div class="input-box">
-            <button class="icon-btn" id="attachBtn" title="Subir imagen o archivo">+</button>
-            <input type="text" id="query" placeholder="Pregúntale a ZENITH..." autocomplete="off">
-            <button class="icon-btn" id="micBtn" title="Entrada de voz">🎤</button>
-            <button class="icon-btn" id="sendBtn" style="color:#2c3e66;">➤</button>
-        </div>
+  </div>
+
+  <!-- ============================================================
+       OVERLAY DE VOZ
+  ============================================================ -->
+  <div id="voice-overlay" class="hidden">
+    <div class="voice-rings">
+      <div class="voice-ring"></div>
+      <div class="voice-ring"></div>
+      <div class="voice-ring"></div>
+      <div class="voice-mic-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8"x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </div>
     </div>
-</div>
+    <div class="voice-status-text">Escuchando...</div>
+    <div class="voice-transcript-preview" id="voice-transcript-preview"></div>
+    <button class="btn-voice-cancel" id="voice-cancel-btn">Cancelar</button>
+  </div>
 
-<input type="file" id="file-input" accept="image/*,text/plain">
-
-<div id="loginModal" class="login-modal">
-    <div class="login-card">
-        <h1>ZENITH</h1>
-        <p>Accede con tu cuenta</p>
-        <div class="social-buttons">
-            <button class="social-btn" id="googleBtn">🔵 Continuar con Google</button>
-            <button class="social-btn" id="facebookBtn">🔷 Continuar con Facebook</button>
-            <button class="social-btn" id="phoneBtn">📱 Continuar con Teléfono</button>
+  <!-- ============================================================
+       PANTALLA DE AUTENTICACIÓN
+  ============================================================ -->
+  <div id="auth-screen" class="hidden">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-logo-wrapper">
+          <span class="auth-logo">ZENITH AI</span><span class="auth-logo-dot"></span>
         </div>
-        <div id="phoneSection" class="hidden">
-            <div class="phone-input">
-                <input type="tel" id="phoneNumber" placeholder="+521234567890">
-                <button class="social-btn" id="sendCodeBtn">Enviar código</button>
+
+        <div class="auth-tabs">
+          <div class="auth-tab active" data-tab="login" role="tab" aria-selected="true">Iniciar Sesión</div>
+          <div class="auth-tab" data-tab="register" role="tab" aria-selected="false">Registrarse</div>
+        </div>
+
+        <!-- Panel Login -->
+        <div class="auth-panel active" id="panel-login">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Correo electrónico</label>
+            <input class="form-input" type="email" id="login-email" placeholder="tu@correo.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Contraseña</label>
+            <input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <div class="auth-error-msg" id="login-error"></div>
+          <button class="btn-auth-primary" id="btn-login-email">Iniciar Sesión</button>
+          <div class="auth-divider">
+            <div class="auth-divider-line"></div>
+            <span class="auth-divider-text">o continúa con</span>
+            <div class="auth-divider-line"></div>
+          </div>
+          <button class="btn-google" id="btn-login-google">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continuar con Google
+          </button>
+        </div>
+
+        <!-- Panel Registro -->
+        <div class="auth-panel" id="panel-register">
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Nombre completo</label>
+            <input class="form-input" type="text" id="reg-name" placeholder="Tu nombre" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Correo electrónico</label>
+            <input class="form-input" type="email" id="reg-email" placeholder="tu@correo.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Contraseña</label>
+            <input class="form-input" type="password" id="reg-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password2">Confirmar contraseña</label>
+            <input class="form-input" type="password" id="reg-password2" placeholder="Repite tu contraseña" autocomplete="new-password" />
+          </div>
+          <div class="auth-error-msg" id="register-error"></div>
+          <button class="btn-auth-primary" id="btn-register">Crear cuenta</button>
+          <div class="auth-divider">
+            <div class="auth-divider-line"></div>
+            <span class="auth-divider-text">o continúa con</span>
+            <div class="auth-divider-line"></div>
+          </div>
+          <button class="btn-google" id="btn-register-google">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continuar con Google
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PANTALLA PRINCIPAL DE LA APP
+  ============================================================ -->
+  <div id="app-screen" class="hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" role="navigation" aria-label="Historial de chats">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">ZENITH AI</span>
+        <button class="header-btn" id="btn-close-sidebar" aria-label="Cerrar sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="btn-new-chat" id="btn-new-chat" aria-label="Nuevo chat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nuevo chat
+      </button>
+
+      <div class="sidebar-section-label">Recientes</div>
+
+      <div id="chat-history-list" role="list" aria-label="Lista de chats">
+        <div class="history-skeleton">
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+        </div>
+      </div><div class="sidebar-footer">
+        <div class="user-profile-card" id="user-profile-card" role="button" aria-haspopup="true" aria-expanded="false" tabindex="0">
+          <div class="user-avatar" id="sidebar-avatar">Z</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-username">Cargando...</div>
+            <div class="user-status">En línea</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+          <!-- Menú de usuario -->
+          <div class="user-menu hidden" id="user-menu" role="menu">
+            <div class="user-menu-item" id="menu-settings" role="menuitem">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Configuración
             </div>
-            <div id="codeSection" class="hidden">
-                <input type="text" id="verificationCode" placeholder="Código de 6 dígitos">
-                <button class="social-btn" id="verifyCodeBtn">Verificar</button>
+            <div class="user-menu-item danger" id="menu-logout" role="menuitem">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Cerrar sesión
             </div>
+          </div>
         </div>
-    </div>
-</div>
+      </div>
+    </aside>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCxCFZF01QWVuwU-NBDAV_SJgALaDVkGvU",
-        authDomain: "zenith-ai-3b6f2.firebaseapp.com",
-        projectId: "zenith-ai-3b6f2",
-        storageBucket: "zenith-ai-3b6f2.appspot.com",
-        messagingSenderId: "610202193298",
-        appId: "1:610202193298:web:066b4fe461daa7fbda854b"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    
-    // Enlace directo al Cerebro de Cloudflare
-    const WORKER_URL = 'https://patient-hat-7b16.jacobfontech.workers.dev';
+    <!-- CONTENIDO PRINCIPAL -->
+    <main id="main-content" role="main">
 
-    let currentUser = null, currentChatId = null, conversationHistory = [], recognition = null, isRecording = false, confirmationResult = null, pendingFile = null;
+      <!-- HEADER -->
+      <header id="chat-header">
+        <div class="header-left">
+          <button class="btn-toggle-sidebar" id="btn-toggle-sidebar" aria-label="Alternar sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <span class="chat-title-display" id="chat-title-display">Nuevo chat</span>
+        </div>
+        <div class="header-right">
+          <div class="model-badge">
+            <div class="model-badge-dot"></div>
+            Route-LLM
+          </div>
+          <button class="header-btn" id="btn-clear-chat" title="Limpiar chat" aria-label="Limpiar chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        </div>
+      </header>
 
-    const loginModal = document.getElementById('loginModal');
-    const sidebar = document.getElementById('sidebar');
-    const chatWindow = document.getElementById('chatWindow');
-    const queryInput = document.getElementById('query');
-    const micBtn = document.getElementById('micBtn');
-    const attachBtn = document.getElementById('attachBtn');
-    const fileInput = document.getElementById('file-input');
-    const sendBtn = document.getElementById('sendBtn');
-    const menuToggle = document.getElementById('menuToggle');
-    const newChatBtn = document.getElementById('newChatBtn');
-    const chatListDiv = document.getElementById('chat-list');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const userAvatar = document.getElementById('userAvatar');
-    const userNameSpan = document.getElementById('userName');
+      <!-- ÁREA DE MENSAJES -->
+      <div id="messages-container" role="log" aria-live="polite" aria-label="Mensajes del chat">
+        <div id="welcome-screen">
+          <div class="welcome-logo">ZENITH AI</div>
+          <p class="welcome-subtitle">Tu asistente de inteligencia artificial. ¿En qué puedo ayudarte hoy?</p>
+          <div class="welcome-suggestions">
+            <div class="suggestion-card" data-prompt="Explícame cómo funciona la inteligencia artificial de forma sencilla">
+              <div class="suggestion-card-icon">🧠</div>
+              <div class="suggestion-card-title">Explica IA</div>
+              <div class="suggestion-card-desc">Cómo funciona la inteligencia artificial</div>
+            </div>
+            <div class="suggestion-card" data-prompt="Escribe un correo profesional para solicitar una reunión de negocios">
+              <div class="suggestion-card-icon">✉️</div>
+              <div class="suggestion-card-title">Redactar correo</div>
+              <div class="suggestion-card-desc">Correo profesional para reunión</div>
+            </div>
+            <div class="suggestion-card" data-prompt="Escribe una función en Python para ordenar una lista de diccionarios por un campo específico">
+              <div class="suggestion-card-icon">💻</div>
+              <div class="suggestion-card-title">Código Python</div>
+              <div class="suggestion-card-desc">Función para ordenar diccionarios</div>
+            </div>
+            <div class="suggestion-card" data-prompt="Dame 5 ideas creativas para un proyecto de startup tecnológica en 2025">
+              <div class="suggestion-card-icon">🚀</div>
+              <div class="suggestion-card-title">Ideas startup</div>
+              <div class="suggestion-card-desc">5 ideas para startup tecnológica</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
-    }
+      <!-- BOTÓN SCROLL TO BOTTOM -->
+      <button id="scroll-to-bottom" aria-label="Ir al final">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
 
-    function updateUIForUser(user) {
-        if (user) {
-            currentUser = user;
-            loginModal.style.display = 'none';
-            const name = user.displayName || user.phoneNumber || user.email || "Usuario";
-            userNameSpan.textContent = name;
-            userAvatar.textContent = name.charAt(0).toUpperCase();
-            loadChatList();
-            startNewChat();
-        } else {
-            loginModal.style.display = 'flex';
-            chatWindow.innerHTML = '';
-            currentUser = null;
+      <!-- BOTÓN STOP GENERATION -->
+      <button id="stop-btn" class="hidden" aria-label="Detener generación">
+        <div class="stop-icon"></div>
+        Detener generación
+      </button><!-- ÁREA DE INPUT -->
+      <div id="input-area">
+        <div class="input-wrapper">
+          <div class="input-box">
+            <textarea
+              id="message-input"
+              placeholder="Escribe un mensaje..."
+              rows="1"
+              aria-label="Campo de mensaje"
+              aria-multiline="true"
+              maxlength="32000"
+            ></textarea>
+            <div class="input-actions">
+              <button class="input-btn" id="mic-btn" title="Usar micrófono" aria-label="Activar micrófono">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              </button>
+              <button id="send-btn" aria-label="Enviar mensaje" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint">Enter para enviar · Shift+Enter para nueva línea</span>
+            <span class="char-counter" id="char-counter">0 / 32000</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /#app-screen -->
+
+  <!-- ============================================================
+       JAVASCRIPT PRINCIPAL
+  ============================================================ -->
+  <script>
+  'use strict';
+
+  /* ================================================================
+     CONFIGURACIÓN GLOBAL
+  ================================================================ */
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyDSdCIvRE7nvZ11-pQGoosbCraE3xfKmhA",
+    authDomain:        "zenith-ia-d800a.firebaseapp.com",
+    projectId:         "zenith-ia-d800a",
+    storageBucket:     "zenith-ia-d800a.firebasestorage.app",
+    messagingSenderId: "1055549299285",
+    appId:             "1:1055549299285:web:011b9307905ad1442b92dc",
+    measurementId:     "G-MNX257C38L"
+  };
+
+  const ABACUS_API_KEY      = "s2_d6f41c43993441c3bccffb38ee682d33";
+  const ABACUS_API_ENDPOINT = "https://routellm.abacus.ai/v1/chat/completions";
+  const AI_MODEL            = "route-llm";
+  const MAX_HISTORY_CONTEXT = 20;   // Mensajes máximos enviados como contexto a la API
+  const MAX_CHAR_INPUT      = 32000;
+
+  /* ================================================================
+     ESTADO GLOBAL DE LA APLICACIÓN
+  ================================================================ */
+  const AppState = {
+    currentUser:        null,
+    currentChatId:      null,
+    isStreaming:        false,
+    abortController:    null,
+    unsubscribeHistory: null,   // Listener de Firestore para historial
+    unsubscribeMessages:null,   // Listener de Firestore para mensajes activos
+    sidebarOpen:        true,
+    isMobile:           window.innerWidth <= 768,
+    speechRecognition:  null,
+    isListening:        false,
+    userMenuOpen:       false,
+    messageHistory:     [],     // Contexto local de mensajes para la API
+  };
+
+  /* ================================================================
+     INICIALIZACIÓN DE FIREBASE
+  ================================================================ */
+  let app, auth, db;
+
+  /**
+   * Inicializa Firebase de forma segura.
+   * Retorna true si fue exitoso, false si hubo error.
+   */
+  function initFirebase() {
+    try {
+      app  = firebase.initializeApp(FIREBASE_CONFIG);
+      auth = firebase.auth();
+      db   = firebase.firestore();
+
+      // Configuración de persistencia offline de Firestore
+      db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+        if (err.code === 'failed-precondition') {
+          console.warn('[Firestore] Persistencia no disponible: múltiples pestañas abiertas.');
+        } else if (err.code === 'unimplemented') {
+          console.warn('[Firestore] Persistencia no soportada en este navegador.');
         }
+      });console.info('[Firebase] Inicializado correctamente.');
+      return true;
+    } catch (err) {
+      console.error('[Firebase] Error de inicialización:', err);
+      showToast('Error crítico', 'No se pudo inicializar Firebase.', 'error');
+      return false;
     }
+  }
 
-    document.getElementById('googleBtn').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(alert);
-    document.getElementById('facebookBtn').onclick = () => auth.signInWithPopup(new firebase.auth.FacebookAuthProvider()).catch(alert);
-    document.getElementById('phoneBtn').onclick = () => document.getElementById('phoneSection').classList.toggle('hidden');
-    document.getElementById('sendCodeBtn').onclick = () => {
-        const num = document.getElementById('phoneNumber').value;
-        if (!num) return alert("Número requerido");
-        const verifier = new firebase.auth.RecaptchaVerifier('sendCodeBtn', {size: 'invisible'});
-        auth.signInWithPhoneNumber(num, verifier).then(r => { confirmationResult = r; document.getElementById('codeSection').classList.remove('hidden'); }).catch(alert);
+  /* ================================================================
+     SISTEMA DE TOASTS
+  ================================================================ */
+  const toastContainer = document.getElementById('toast-container');
+
+  /**
+   * Muestra una notificación toast.
+   * @param {string} title   - Título del toast
+   * @param {string} message - Mensaje descriptivo
+   * @param {'success'|'error'|'warning'|'info'} type - Tipo visual
+   * @param {number} duration - Duración en ms (default 4000)
+   */
+  function showToast(title, message = '', type = 'info', duration = 4000) {
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type] || icons.info}</span>
+      <div class="toast-content">
+        <div class="toast-title">$${escapeHtml(title)}</div>
+        $${message ? `<div class="toast-message">${escapeHtml(message)}</div>` : ''}
+      </div>
+    `;
+    toastContainer.appendChild(toast);
+
+    const remove = () => {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 300);
     };
-    document.getElementById('verifyCodeBtn').onclick = () => {
-        const code = document.getElementById('verificationCode').value;
-        if (code) confirmationResult.confirm(code).catch(alert);
-    };
-    logoutBtn.onclick = () => auth.signOut().then(() => updateUIForUser(null));
-    auth.onAuthStateChanged(updateUIForUser);
 
-    function getStorageKey() { return `zenith_chats_${currentUser ? currentUser.uid : 'anonymous'}`; }
+    const timer = setTimeout(remove, duration);
+    toast.addEventListener('click', () => { clearTimeout(timer); remove(); });
+  }
 
-    function loadChatList() {
-        chatListDiv.innerHTML = '';
-        const history = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
-        Object.keys(history).forEach(id => {
-            const el = document.createElement('div');
-            el.className = 'chat-item';
-            el.textContent = history[id].title || 'Conversación';
-            el.onclick = () => loadChat(id);
-            chatListDiv.appendChild(el);
-        });
+  /* ================================================================
+     SISTEMA DE MODAL DE CONFIRMACIÓN
+  ================================================================ */
+  const modalOverlay   = document.getElementById('modal-overlay');
+  const modalTitle     = document.getElementById('modal-title');
+  const modalMessage   = document.getElementById('modal-message');
+  const modalCancelBtn = document.getElementById('modal-cancel-btn');
+  const modalConfirmBtn= document.getElementById('modal-confirm-btn');
+  let   modalResolve   = null;
+
+  /**
+   * Muestra un modal de confirmación y retorna una Promise<boolean>.
+   * @param {string} title
+   * @param {string} message
+   * @param {string} confirmText
+   */
+  function showModal(title, message, confirmText = 'Confirmar') {
+    modalTitle.textContent   = title;
+    modalMessage.textContent = message;
+    modalConfirmBtn.textContent = confirmText;
+    modalOverlay.classList.remove('hidden');
+
+    return new Promise(resolve => {
+      modalResolve = resolve;
+    });
+  }
+
+  modalConfirmBtn.addEventListener('click', () => {
+    modalOverlay.classList.add('hidden');
+    if (modalResolve) { modalResolve(true); modalResolve = null; }
+  });
+  modalCancelBtn.addEventListener('click', () => {
+    modalOverlay.classList.add('hidden');
+    if (modalResolve) { modalResolve(false); modalResolve = null; }
+  });
+  modalOverlay.addEventListener('click', e => {
+    if (e.target === modalOverlay) {
+      modalOverlay.classList.add('hidden');
+      if (modalResolve) { modalResolve(false); modalResolve = null; }
     }
+  });
 
-    function startNewChat() {
-        currentChatId = 'chat_' + Date.now();
-        conversationHistory = [];
-        chatWindow.innerHTML = '';
-        
-        // ¡Mejora dinámica de Grok aplicada! Saluda a quien inicie sesión.
-        const userNameDisplay = currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'usuario');
-        addMessage(`Hola ${userNameDisplay}, soy ZENITH AI. ¿En qué puedo asistirte hoy?`, 'ai');
+  /* ================================================================
+     MONITOR DE CONEXIÓN A INTERNET
+  ================================================================ */
+  const connectionBanner = document.getElementById('connection-banner');
+
+  window.addEventListener('online',  () => {
+    connectionBanner.classList.remove('visible');
+    showToast('Conexión restaurada', 'Estás de vuelta en línea.', 'success');
+  });
+  window.addEventListener('offline', () => {
+    connectionBanner.classList.add('visible');
+    showToast('Sin conexión', 'Verifica tu conexión a internet.', 'warning', 8000);
+  });
+
+  /* ================================================================
+     UTILIDADES
+  ================================================================ */
+
+  /**
+   * Escapa caracteres HTML para prevenir XSS.
+   */
+  function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * Formatea un timestamp de Firestore o Date a string legible.
+   */
+  function formatTimestamp(ts) {
+    if (!ts) return '';
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    const now   = new Date();
+    const diff  = now - date;
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+
+    if (mins < 1)    return 'Ahora';
+    if (mins < 60)   return `Hace ${mins}m`;
+    if (hours < 24)  return `Hace $${hours}h`;
+    if (days < 7)    return `Hace $${days}d`;
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+  }
+
+  /**
+   * Formatea hora exacta para timestamp de mensaje.
+   */
+  function formatMessageTime(ts) {
+    if (!ts) return '';
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /**
+   * Genera un ID único local (para uso antes de guardar en Firestore).
+   */
+  function generateLocalId() {
+    return `local_$${Date.now()}_$${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Obtiene las iniciales de un nombre.
+   */
+  function getInitials(name) {
+    if (!name) return 'Z';
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  /**
+   * Auto-resize del textarea según contenido.
+   */
+  function autoResizeTextarea(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+  }
+
+  /**
+   * Configura marked.js con opciones de seguridad y highlight.
+   */
+  function configureMarked() {
+    if (typeof marked === 'undefined') return;
+    marked.setOptions({
+      highlight: (code, lang) => {
+        if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+          try { return hljs.highlight(code, { language: lang }).value; } catch {}
+        }
+        return typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : escapeHtml(code);
+      },
+      breaks:   true,
+      gfm:      true,
+      sanitize: false,
+    });
+  }/**
+   * Renderiza markdown a HTML seguro y agrega botones de copia a bloques de código.
+   */
+  function renderMarkdown(text) {
+    if (typeof marked === 'undefined') return escapeHtml(text).replace(/\n/g, '<br>');
+    try {
+      const html = marked.parse(text);
+      // Inyectar botón de copia en bloques <pre>
+      return html.replace(/<pre>/g, '<pre style="position:relative"><button class="code-copy-btn" onclick="copyCodeBlock(this)">Copiar</button>');
+    } catch {
+      return escapeHtml(text).replace(/\n/g, '<br>');
     }
+  }
 
-    function saveMessage(text, role, extra = null) {
-        const key = getStorageKey();
-        let history = JSON.parse(localStorage.getItem(key) || '{}');
-        if (!history[currentChatId]) history[currentChatId] = {title: text.substring(0,28)+'…', messages: []};
-        const msg = {role, text};
-        if (extra) msg.extra = extra;
-        history[currentChatId].messages.push(msg);
-        if (role === 'user' && history[currentChatId].messages.length === 1) history[currentChatId].title = text.substring(0,30) + (text.length>30?'…':'');
-        localStorage.setItem(key, JSON.stringify(history));
-        loadChatList();
-    }
+  /**
+   * Copia el contenido de un bloque de código al portapapeles.
+   */
+  window.copyCodeBlock = function(btn) {
+    const pre  = btn.closest('pre');
+    const code = pre.querySelector('code');
+    const text = code ? code.innerText : pre.innerText.replace('Copiar', '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '¡Copiado!';
+      setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
+    }).catch(() => showToast('Error', 'No se pudo copiar.', 'error'));
+  };
 
-    function loadChat(id) {
-        currentChatId = id;
-        const history = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
-        const chat = history[id];
-        if (!chat) return;
-        chatWindow.innerHTML = '';
-        conversationHistory = [];
-        chat.messages.forEach(m => {
-            if (m.extra?.type === 'image') addMessageWithImage(m.text, m.role, m.extra.src);
-            else addMessage(m.text, m.role);
-            conversationHistory.push({role: m.role === 'user' ? 'user' : 'assistant', content: m.text});
-        });
-    }
+  /* ================================================================
+     AUTENTICACIÓN — FIREBASE AUTH
+  ================================================================ */
 
-    function addMessage(text, role) {
-        const div = document.createElement('div');
-        div.className = `message ${role}`;
-        div.textContent = text;
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-        return div;
-    }
+  /**
+   * Muestra un error en el formulario de auth.
+   */
+  function showAuthError(elementId, message) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('visible');
+    // Marcar campo con error
+    const inputs = el.closest('.auth-panel').querySelectorAll('.form-input');
+    inputs.forEach(i => i.classList.add('error'));
+    setTimeout(() => {
+      el.classList.remove('visible');
+      inputs.forEach(i => i.classList.remove('error'));
+    }, 5000);
+  }
 
-    function addMessageWithImage(text, role, imgSrc) {
-        const div = document.createElement('div');
-        div.className = `message ${role}`;
-        div.innerHTML = text ? `<div>${escapeHtml(text)}</div><img src="${imgSrc}" alt="adjunto">` : `<img src="${imgSrc}" alt="adjunto">`;
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechAPI) {
-        recognition = new SpeechAPI();
-        recognition.lang = 'es-MX';
-        recognition.interimResults = false;
-        recognition.onstart = () => { isRecording = true; micBtn.classList.add('recording'); };
-        recognition.onend = () => { isRecording = false; micBtn.classList.remove('recording'); };
-        recognition.onresult = (e) => {
-            queryInput.value = e.results[0][0].transcript;
-            sendMessage();
-        };
+  /**
+   * Pone un botón en estado de carga.
+   */
+  function setButtonLoading(btn, loading, originalText) {
+    if (loading) {
+      btn.disabled = true;
+      btn.dataset.originalText = btn.innerHTML;
+      btn.innerHTML = `<span class="btn-spinner"></span>`;
     } else {
-        micBtn.style.opacity = '0.5';
-        micBtn.title = "Micrófono no soportado";
+      btn.disabled = false;
+      btn.innerHTML = originalText || btn.dataset.originalText || 'Continuar';
     }
-    micBtn.addEventListener('click', () => {
-        if (!recognition) return;
-        if (isRecording) recognition.stop();
-        else recognition.start();
+  }
+
+  /**
+   * Traduce códigos de error de Firebase a mensajes en español.
+   */
+  function translateFirebaseError(code) {
+    const map = {
+      'auth/user-not-found':        'No existe una cuenta con este correo.',
+      'auth/wrong-password':        'Contraseña incorrecta.',
+      'auth/invalid-email':         'El correo electrónico no es válido.',
+      'auth/email-already-in-use':  'Este correo ya está registrado.',
+      'auth/weak-password':         'La contraseña debe tener al menos 6 caracteres.',
+      'auth/too-many-requests':     'Demasiados intentos. Espera unos minutos.',
+      'auth/network-request-failed':'Error de red. Verifica tu conexión.',
+      'auth/popup-closed-by-user':  'Ventana de Google cerrada. Intenta de nuevo.',
+      'auth/cancelled-popup-request':'Solicitud cancelada.',
+      'auth/invalid-credential':    'Credenciales inválidas. Verifica tu correo y contraseña.',
+      'auth/operation-not-allowed': 'Este método de inicio de sesión no está habilitado.',
+      'auth/user-disabled':         'Esta cuenta ha sido deshabilitada.',
+    };
+    return map[code] || 'Ocurrió un error inesperado. Intenta de nuevo.';
+  }
+
+  /* --- Login con Email/Password --- */
+  document.getElementById('btn-login-email').addEventListener('click', async () => {
+    const btn      = document.getElementById('btn-login-email');
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+      showAuthError('login-error', 'Por favor completa todos los campos.');
+      return;
+    }
+
+    setButtonLoading(btn, true);
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      // onAuthStateChanged se encarga del resto
+    } catch (err) {
+      console.error('[Auth] Login email error:', err.code);
+      showAuthError('login-error', translateFirebaseError(err.code));
+      setButtonLoading(btn, false);
+    }
+  });
+
+  /* --- Login con Google --- */
+  async function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+    provider.setCustomParameters({ prompt: 'select_account' });try {
+      await auth.signInWithPopup(provider);
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        console.error('[Auth] Google login error:', err.code);
+        showAuthError('login-error', translateFirebaseError(err.code));
+        showToast('Error de Google', translateFirebaseError(err.code), 'error');
+      }
+    }
+  }
+
+  document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
+  document.getElementById('btn-register-google').addEventListener('click', loginWithGoogle);
+
+  /* --- Registro con Email/Password --- */
+  document.getElementById('btn-register').addEventListener('click', async () => {
+    const btn       = document.getElementById('btn-register');
+    const name      = document.getElementById('reg-name').value.trim();
+    const email     = document.getElementById('reg-email').value.trim();
+    const password  = document.getElementById('reg-password').value;
+    const password2 = document.getElementById('reg-password2').value;
+
+    if (!name || !email || !password || !password2) {
+      showAuthError('register-error', 'Por favor completa todos los campos.');
+      return;
+    }
+    if (password !== password2) {
+      showAuthError('register-error', 'Las contraseñas no coinciden.');
+      return;
+    }
+    if (password.length < 6) {
+      showAuthError('register-error', 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    setButtonLoading(btn, true);
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      // Actualizar displayName
+      await cred.user.updateProfile({ displayName: name });
+      // Crear documento de usuario en Firestore
+      await db.collection('users').doc(cred.user.uid).set({
+        displayName: name,
+        email:       email,
+        createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+        photoURL:    null,
+      }, { merge: true });
+    } catch (err) {
+      console.error('[Auth] Register error:', err.code);
+      showAuthError('register-error', translateFirebaseError(err.code));
+      setButtonLoading(btn, false);
+    }
+  });
+
+  /* --- Tabs de autenticación --- */
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.auth-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === target);
+        t.setAttribute('aria-selected', t.dataset.tab === target);
+      });
+      document.querySelectorAll('.auth-panel').forEach(p => {
+        p.classList.toggle('active', p.id === `panel-${target}`);
+      });
+      // Limpiar errores al cambiar tab
+      document.querySelectorAll('.auth-error-msg').forEach(e => e.classList.remove('visible'));
+    });
+  });
+
+  /* --- Enter en campos de login --- */
+  ['login-email', 'login-password'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-login-email').click();
+    });
+  });
+
+  /* ================================================================
+     OBSERVER DE AUTENTICACIÓN — Punto central de control de sesión
+  ================================================================ */
+  function setupAuthObserver() {
+    auth.onAuthStateChanged(async user => {
+      hideSplash();
+
+      if (user) {
+        AppState.currentUser = user;
+        await onUserLoggedIn(user);
+      } else {
+        AppState.currentUser = null;
+        onUserLoggedOut();
+      }
+    });
+  }
+
+  /**
+   * Acciones al iniciar sesión exitosamente.
+   */
+  async function onUserLoggedIn(user) {
+    // Asegurar documento de usuario en Firestore
+    try {
+      await db.collection('users').doc(user.uid).set({
+        displayName: user.displayName || 'Usuario',
+        email:       user.email,
+        photoURL:    user.photoURL || null,
+        lastLogin:   firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    } catch (err) {
+      console.warn('[Firestore] No se pudo actualizar perfil de usuario:', err);
+    }
+
+    // Actualizar UI con datos del usuario
+    updateUserUI(user);
+
+    // Mostrar app, ocultar auth
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app-screen').classList.remove('hidden');
+
+    // Iniciar listeners de Firestore
+    startHistoryListener(user.uid);
+
+    // Bienvenida
+    const firstName = (user.displayName || 'Usuario').split(' ')[0];
+    showToast(`¡Bienvenido, ${firstName}!`, 'Sesión iniciada correctamente.', 'success');
+
+    // Ajustar sidebar en mobile
+    if (AppState.isMobile) {
+      closeSidebar();
+    }
+  }/**
+   * Acciones al cerrar sesión.
+   */
+  function onUserLoggedOut() {
+    // Limpiar listeners
+    if (AppState.unsubscribeHistory)  { AppState.unsubscribeHistory();  AppState.unsubscribeHistory  = null; }
+    if (AppState.unsubscribeMessages) { AppState.unsubscribeMessages(); AppState.unsubscribeMessages = null; }
+
+    // Resetear estado
+    AppState.currentChatId   = null;
+    AppState.messageHistory  = [];
+    AppState.isStreaming      = false;
+
+    // Mostrar auth, ocultar app
+    document.getElementById('app-screen').classList.add('hidden');
+    document.getElementById('auth-screen').classList.remove('hidden');
+
+    // Limpiar formularios
+    ['login-email','login-password','reg-name','reg-email','reg-password','reg-password2']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  }
+
+  /**
+   * Actualiza los elementos de UI con los datos del usuario.
+   */
+  function updateUserUI(user) {
+    const name    = user.displayName || user.email || 'Usuario';
+    const initials= getInitials(name);
+
+    document.getElementById('sidebar-username').textContent = name;
+
+    const avatarEl = document.getElementById('sidebar-avatar');
+    if (user.photoURL) {
+      avatarEl.innerHTML = `<img src="$${user.photoURL}" alt="$${escapeHtml(name)}" referrerpolicy="no-referrer" />`;
+    } else {
+      avatarEl.textContent = initials;
+    }
+  }
+
+  /* ================================================================
+     CERRAR SESIÓN
+  ================================================================ */
+  document.getElementById('menu-logout').addEventListener('click', async () => {
+    closeUserMenu();
+    const confirmed = await showModal(
+      'Cerrar sesión',
+      '¿Estás seguro de que deseas cerrar sesión?',
+      'Cerrar sesión'
+    );
+    if (confirmed) {
+      try {
+        await auth.signOut();
+      } catch (err) {
+        console.error('[Auth] Error al cerrar sesión:', err);
+        showToast('Error', 'No se pudo cerrar sesión.', 'error');
+      }
+    }
+  });
+
+  /* ================================================================
+     SIDEBAR — CONTROL
+  ================================================================ */
+  function openSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    AppState.sidebarOpen = true;
+    if (AppState.isMobile) {
+      sidebar.classList.add('mobile-open');
+      sidebar.classList.remove('collapsed');
+      // Backdrop
+      if (!document.getElementById('sidebar-backdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.id = 'sidebar-backdrop';
+        backdrop.className = 'sidebar-backdrop';
+        backdrop.addEventListener('click', closeSidebar);
+        document.getElementById('app-screen').insertBefore(backdrop, document.getElementById('sidebar').nextSibling);
+      }
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+  }
+
+  function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    AppState.sidebarOpen = false;
+    if (AppState.isMobile) {
+      sidebar.classList.remove('mobile-open');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (backdrop) backdrop.remove();
+    } else {
+      sidebar.classList.add('collapsed');
+    }
+  }
+
+  function toggleSidebar() {
+    AppState.sidebarOpen ? closeSidebar() : openSidebar();
+  }
+
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', toggleSidebar);
+  document.getElementById('btn-close-sidebar').addEventListener('click', closeSidebar);
+
+  // Responsive resize
+  window.addEventListener('resize', () => {
+    const wasMobile = AppState.isMobile;
+    AppState.isMobile = window.innerWidth <= 768;
+    if (wasMobile !== AppState.isMobile) {
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (backdrop) backdrop.remove();
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.remove('mobile-open', 'collapsed');
+      AppState.sidebarOpen = !AppState.isMobile;
+    }
+  });
+
+  /* ================================================================
+     MENÚ DE USUARIO
+  ================================================================ */function openUserMenu() {
+    AppState.userMenuOpen = true;
+    document.getElementById('user-menu').classList.remove('hidden');
+    document.getElementById('user-profile-card').setAttribute('aria-expanded', 'true');
+  }
+  function closeUserMenu() {
+    AppState.userMenuOpen = false;
+    document.getElementById('user-menu').classList.add('hidden');
+    document.getElementById('user-profile-card').setAttribute('aria-expanded', 'false');
+  }
+
+  document.getElementById('user-profile-card').addEventListener('click', e => {
+    e.stopPropagation();
+    AppState.userMenuOpen ? closeUserMenu() : openUserMenu();
+  });
+  document.addEventListener('click', e => {
+    if (AppState.userMenuOpen && !document.getElementById('user-profile-card').contains(e.target)) {
+      closeUserMenu();
+    }
+  });
+
+  /* ================================================================
+     FIRESTORE — GESTIÓN DE CHATS
+  ================================================================ */
+
+  /**
+   * Crea un nuevo chat en Firestore y lo activa.
+   * @param {string} firstMessage - Primer mensaje del usuario (para el título)
+   * @returns {Promise<string>} chatId
+   */
+  async function createNewChat(firstMessage = '') {
+    if (!AppState.currentUser) return null;
+
+    const title = firstMessage
+      ? firstMessage.slice(0, 60) + (firstMessage.length > 60 ? '...' : '')
+      : 'Nuevo chat';
+
+    try {
+      const chatRef = await db
+        .collection('users')
+        .doc(AppState.currentUser.uid)
+        .collection('chats')
+        .add({
+          title:     title,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          messageCount: 0,
+        });
+
+      AppState.currentChatId  = chatRef.id;
+      AppState.messageHistory = [];
+      updateChatTitle(title);
+      return chatRef.id;
+    } catch (err) {
+      console.error('[Firestore] Error creando chat:', err);
+      showToast('Error', 'No se pudo crear el chat.', 'error');
+      return null;
+    }
+  }
+
+  /**
+   * Guarda un mensaje en Firestore.
+   * @param {string} chatId
+   * @param {'user'|'assistant'} role
+   * @param {string} content
+   */
+  async function saveMessage(chatId, role, content) {
+    if (!AppState.currentUser || !chatId) return;
+
+    try {
+      const msgRef = db
+        .collection('users')
+        .doc(AppState.currentUser.uid)
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages');
+
+      await msgRef.add({
+        role:      role,
+        content:   content,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Actualizar metadata del chat
+      await db
+        .collection('users')
+        .doc(AppState.currentUser.uid)
+        .collection('chats')
+        .doc(chatId)
+        .update({
+          updatedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+          lastMessage:  content.slice(0, 100),
+          messageCount: firebase.firestore.FieldValue.increment(1),
+        });
+
+    } catch (err) {
+      console.error('[Firestore] Error guardando mensaje:', err);
+    }
+  }
+
+  /**
+   * Carga los mensajes de un chat específico.
+   * @param {string} chatId
+   */
+  async function loadChatMessages(chatId) {
+    if (!AppState.currentUser || !chatId) return;
+
+    // Cancelar listener anterior si existe
+    if (AppState.unsubscribeMessages) {
+      AppState.unsubscribeMessages();
+      AppState.unsubscribeMessages = null;
+    }
+
+    // Limpiar área de mensajes
+    clearMessagesUI();
+    AppState.messageHistory = [];
+
+    try {
+      const snapshot = await db
+        .collection('users')
+        .doc(AppState.currentUser.uid)
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc')
+        .get();
+
+      if (snapshot.empty) {
+        showWelcomeScreen();
+        return;
+      }
+
+      hideWelcomeScreen();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        renderMessage(data.role, data.content, data.timestamp, doc.id);
+        // Reconstruir contexto para la API
+        if (AppState.messageHistory.length < MAX_HISTORY_CONTEXT) {
+          AppState.messageHistory.push({ role: data.role, content: data.content });
+        }
+      });
+
+      scrollToBottom(false);
+    } catch (err) {
+      console.error('[Firestore] Error cargando mensajes:', err);
+      showToast('Error', 'No se pudieron cargar los mensajes.', 'error');
+    }
+  }
+
+  /**
+   * Elimina un chat y todos sus mensajes.
+   * @param {string} chatId
+   */
+  async function deleteChat(chatId) {
+    if (!AppState.currentUser || !chatId) return;
+
+    try {
+      // Eliminar subcolección de mensajes
+      const messagesSnap = await db
+        .collection('users')
+        .doc(AppState.currentUser.uid)
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .get();
+
+      const batch = db.batch();
+      messagesSnap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+
+      // Eliminar documento del chat
+      await db
+        .collection('users')
+        .doc(AppState.currentUser.uid)
+        .collection('chats')
+        .doc(chatId)
+        .delete();
+
+      // Si era el chat activo, crear uno nuevo
+      if (AppState.currentChatId === chatId) {
+        startNewChatUI();
+      }
+
+      showToast('Chat eliminado', '', 'success', 2500);
+    } catch (err) {
+      console.error('[Firestore] Error eliminando chat:', err);
+      showToast('Error', 'No se pudo eliminar el chat.', 'error');
+    }
+  }
+
+  /* ================================================================
+     FIRESTORE — LISTENER DE HISTORIAL EN TIEMPO REAL
+  ================================================================ *//**
+   * Inicia el listener en tiempo real del historial de chats del usuario.
+   * @param {string} uid
+   */
+  function startHistoryListener(uid) {
+    if (AppState.unsubscribeHistory) AppState.unsubscribeHistory();
+
+    const historyList = document.getElementById('chat-history-list');
+
+    AppState.unsubscribeHistory = db
+      .collection('users')
+      .doc(uid)
+      .collection('chats')
+      .orderBy('updatedAt', 'desc')
+      .limit(50)
+      .onSnapshot(snapshot => {
+        renderHistoryList(snapshot.docs);
+      }, err => {
+        console.error('[Firestore] Error en listener de historial:', err);
+        historyList.innerHTML = `
+          <div class="history-empty">
+            <div class="history-empty-icon">⚠️</div>
+            Error al cargar el historial.
+          </div>`;
+      });
+  }
+
+  /**
+   * Renderiza la lista de chats en el sidebar.
+   * @param {Array} docs - Array de DocumentSnapshot
+   */
+  function renderHistoryList(docs) {
+    const historyList = document.getElementById('chat-history-list');
+
+    if (!docs || docs.length === 0) {
+      historyList.innerHTML = `
+        <div class="history-empty">
+          <div class="history-empty-icon">💬</div>
+          Aún no tienes chats.<br>¡Empieza una conversación!
+        </div>`;
+      return;
+    }
+
+    historyList.innerHTML = '';
+
+    docs.forEach(doc => {
+      const data    = doc.data();
+      const chatId  = doc.id;
+      const isActive= chatId === AppState.currentChatId;
+      const title   = data.title || 'Chat sin título';
+      const timeStr = formatTimestamp(data.updatedAt);
+
+      const item = document.createElement('div');
+      item.className = `chat-history-item${isActive ? ' active' : ''}`;
+      item.setAttribute('role', 'listitem');
+      item.dataset.chatId = chatId;
+      item.innerHTML = `
+        <div class="chat-history-item-icon">💬</div>
+        <div class="chat-history-item-content">
+          <div class="chat-history-item-title" title="${escapeHtml(title)}">$${escapeHtml(title)}</div>
+          <div class="chat-history-item-date">$${timeStr}</div>
+        </div>
+        <button class="chat-history-item-delete" data-chat-id="${chatId}" title="Eliminar chat" aria-label="Eliminar chat">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+          </svg>
+        </button>
+      `;
+
+      // Click en el item → cargar chat
+      item.addEventListener('click', e => {
+        if (e.target.closest('.chat-history-item-delete')) return;
+        if (chatId === AppState.currentChatId) return;
+        selectChat(chatId, title);
+        if (AppState.isMobile) closeSidebar();
+      });
+
+      // Click en botón eliminar
+      item.querySelector('.chat-history-item-delete').addEventListener('click', async e => {
+        e.stopPropagation();
+        const confirmed = await showModal(
+          'Eliminar chat',
+          `¿Eliminar "${title}"? Esta acción no se puede deshacer.`,
+          'Eliminar'
+        );
+        if (confirmed) deleteChat(chatId);
+      });
+
+      historyList.appendChild(item);
+    });
+  }
+
+  /**
+   * Selecciona y carga un chat del historial.
+   */
+  async function selectChat(chatId, title) {
+    AppState.currentChatId = chatId;
+    updateChatTitle(title || 'Chat');
+
+    // Actualizar estado activo en sidebar
+    document.querySelectorAll('.chat-history-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.chatId === chatId);
     });
 
-    attachBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        if (file.type.startsWith('image/')) {
-            reader.onload = ev => {
-                pendingFile = {type: 'image', src: ev.target.result, name: file.name};
-                addMessageWithImage(`📷 ${file.name}`, 'user', ev.target.result);
-                saveMessage(`📷 ${file.name}`, 'user', {type: 'image', src: ev.target.result});
-            };
-            reader.readAsDataURL(file);
-        } else if (file.type === 'text/plain') {
-            reader.onload = ev => {
-                pendingFile = {type: 'text', content: ev.target.result};
-                queryInput.value += `\n\n📄 ${file.name}\n${ev.target.result.substring(0,400)}${ev.target.result.length > 400 ? '...' : ''}`;
-            };
-            reader.readAsText(file);
-        }
-        fileInput.value = '';
+    await loadChatMessages(chatId);
+  }
+
+  /* ================================================================
+     UI — MENSAJES
+  ================================================================ */
+
+  function showWelcomeScreen() {
+    const ws = document.getElementById('welcome-screen');
+    if (ws) ws.style.display = 'flex';
+  }
+
+  function hideWelcomeScreen() {
+    const ws = document.getElementById('welcome-screen');
+    if (ws) ws.style.display = 'none';
+  }
+
+  function clearMessagesUI() {
+    const container = document.getElementById('messages-container');
+    // Mantener welcome-screen y typing-indicator, eliminar mensajes
+    const messages = container.querySelectorAll('.message-wrapper');
+    messages.forEach(m => m.remove());
+    const typing = document.getElementById('typing-indicator');
+    if (typing) typing.remove();
+    showWelcomeScreen();
+  }
+
+  function updateChatTitle(title) {
+    document.getElementById('chat-title-display').textContent = title || 'Nuevo chat';
+  }
+
+  /**
+   * Renderiza un mensaje en el área de chat.
+   * @param {'user'|'assistant'} role
+   * @param {string} content
+   * @param {object|null} timestamp
+   * @param {string|null} messageId
+   * @returns {HTMLElement} El elemento del mensaje
+   */
+  function renderMessage(role, content, timestamp = null, messageId = null) {
+    hideWelcomeScreen();
+
+    const container  = document.getElementById('messages-container');
+    const isUser     = role === 'user';
+    const user       = AppState.currentUser;
+    const userName   = user ? (user.displayName || 'Tú') : 'Tú';
+    const timeStr    = timestamp ? formatMessageTime(timestamp) : formatMessageTime(new Date());
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper';
+    if (messageId) wrapper.dataset.messageId = messageId;
+
+    // Avatar del usuario
+    let avatarHtml;
+    if (isUser) {
+      if (user && user.photoURL) {
+        avatarHtml = `<div class="message-avatar user-avatar-msg"><img src="$${user.photoURL}" alt="$${escapeHtml(userName)}" referrerpolicy="no-referrer" /></div>`;
+      } else {
+        avatarHtml = `<div class="message-avatar user-avatar-msg">${getInitials(userName)}</div>`;
+      }
+    } else {
+      avatarHtml = `<div class="message-avatar ai-avatar">ZAI</div>`;
+    }const bubbleContent = isUser
+      ? `<div class="message-bubble user-bubble">${escapeHtml(content).replace(/\n/g, '<br>')}</div>`
+      : `<div class="message-bubble ai-bubble">$${renderMarkdown(content)}</div>`;
+
+    wrapper.innerHTML = `
+      <div class="message-row $${isUser ? 'user-row' : 'ai-row'}">
+        ${avatarHtml}
+        <div class="message-content-wrapper">
+          <div class="message-sender-name">${isUser ? escapeHtml(userName) : 'ZENITH AI'}</div>
+          $${bubbleContent}
+          <div class="message-timestamp">$${timeStr}</div>
+          <div class="message-actions">
+            <button class="msg-action-btn" onclick="copyMessageContent(this)" title="Copiar">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copiar
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Insertar antes del typing indicator si existe
+    const typingEl = document.getElementById('typing-indicator');
+    if (typingEl) {
+      container.insertBefore(wrapper, typingEl);
+    } else {
+      container.appendChild(wrapper);
+    }
+
+    // Aplicar highlight.js a bloques de código
+    if (!isUser && typeof hljs !== 'undefined') {
+      wrapper.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+    }
+
+    return wrapper;
+  }
+
+  /**
+   * Copia el contenido de texto de un mensaje.
+   */
+  window.copyMessageContent = function(btn) {
+    const bubble = btn.closest('.message-content-wrapper').querySelector('.message-bubble');
+    const text   = bubble ? bubble.innerText : '';
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '¡Copiado!';
+      setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
+    }).catch(() => showToast('Error', 'No se pudo copiar el mensaje.', 'error'));
+  };
+
+  /**
+   * Muestra el indicador de escritura (typing dots).
+   */
+  function showTypingIndicator() {
+    if (document.getElementById('typing-indicator')) return;
+    const container = document.getElementById('messages-container');
+    const user      = AppState.currentUser;
+    let avatarHtml  = `<div class="message-avatar ai-avatar">ZAI</div>`;
+
+    const el = document.createElement('div');
+    el.id = 'typing-indicator';
+    el.innerHTML = `
+      <div class="typing-row">
+        ${avatarHtml}
+        <div class="typing-bubble">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(el);
+    scrollToBottom(true);
+  }
+
+  function hideTypingIndicator() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  /**
+   * Scroll suave al final del área de mensajes.
+   * @param {boolean} smooth
+   */
+  function scrollToBottom(smooth = true) {
+    const container = document.getElementById('messages-container');
+    container.scrollTo({
+      top:      container.scrollHeight,
+      behavior: smooth ? 'smooth' : 'auto',
     });
+  }
 
-    async function sendMessage() {
-        let text = queryInput.value.trim();
-        if (!text && !pendingFile) return;
+  /* ================================================================
+     SCROLL TO BOTTOM BUTTON
+  ================================================================ */
+  const scrollBtn = document.getElementById('scroll-to-bottom');
 
-        if (pendingFile && pendingFile.type === 'image' && !text) text = 'Analiza esta imagen con detalle.';
+  document.getElementById('messages-container').addEventListener('scroll', function () {
+    const distFromBottom = this.scrollHeight - this.scrollTop - this.clientHeight;
+    scrollBtn.classList.toggle('visible', distFromBottom > 200);
+  });
 
-        if (pendingFile && pendingFile.type === 'image') {
-            conversationHistory.push({role: 'user', content: text, image_base64: pendingFile.src});
-        } else {
-            addMessage(text, 'user');
-            saveMessage(text, 'user');
-            conversationHistory.push({role: 'user', content: text});
-        }
+  scrollBtn.addEventListener('click', () => scrollToBottom(true));
 
-        queryInput.value = '';
-        const fileToSend = pendingFile;
-        pendingFile = null;
+  /* ================================================================
+     NUEVO CHAT — UI
+  ================================================================ */
+  function startNewChatUI() {
+    // Cancelar streaming si hay uno activo
+    if (AppState.isStreaming && AppState.abortController) {
+      AppState.abortController.abort();
+    }
 
-        queryInput.disabled = true;
-        sendBtn.disabled = true;
+    AppState.currentChatId  = null;
+    AppState.messageHistory = [];
+    AppState.isStreaming     = false;
 
-        const thinking = addMessage('ZENITH está procesando...', 'ai');
-        thinking.classList.add('typing');
+    clearMessagesUI();
+    showWelcomeScreen();
+    updateChatTitle('Nuevo chat');
+    setInputEnabled(true);
+    hideTypingIndicator();
+    document.getElementById('stop-btn').classList.add('hidden');
 
+    // Deseleccionar item activo en sidebar
+    document.querySelectorAll('.chat-history-item').forEach(i => i.classList.remove('active'));
+
+    // Focus en input
+    document.getElementById('message-input').focus();
+  }
+
+  document.getElementById('btn-new-chat').addEventListener('click', () => {
+    startNewChatUI();
+    if (AppState.isMobile) closeSidebar();
+  });
+
+  /* ================================================================
+     LIMPIAR CHAT ACTUAL
+  ================================================================ */
+  document.getElementById('btn-clear-chat').addEventListener('click', async () => {
+    if (!AppState.currentChatId) {
+      startNewChatUI();
+      return;
+    }
+    const confirmed = await showModal(
+      'Limpiar chat',
+      'Se eliminarán todos los mensajes de esta conversación. ¿Continuar?',
+      'Limpiar'
+    );
+    if (confirmed) {
+      await deleteChat(AppState.currentChatId);
+      startNewChatUI();
+    }
+  });
+
+  /* ================================================================
+     INPUT — CONTROL Y ENVÍO
+  ================================================================ */
+  const messageInput = document.getElementById('message-input');
+  const sendBtn      = document.getElementById('send-btn');
+  const charCounter  = document.getElementById('char-counter');
+
+  messageInput.addEventListener('input', () => {
+    autoResizeTextarea(messageInput);
+    const len = messageInput.value.length;
+    charCounter.textContent = `${len} / ${MAX_CHAR_INPUT}`;
+    charCounter.className   = 'char-counter' +
+      (len > MAX_CHAR_INPUT * 0.9 ? ' danger' :
+       len > MAX_CHAR_INPUT * 0.75 ? ' warning' : '');
+    sendBtn.disabled = len === 0 || AppState.isStreaming;
+  });
+
+  messageInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) handleSendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', () => {
+    if (!sendBtn.disabled) handleSendMessage();
+  });
+
+  function setInputEnabled(enabled) {
+    messageInput.disabled = !enabled;
+    sendBtn.disabled      = !enabled || messageInput.value.trim().length === 0;
+    document.getElementById('mic-btn').disabled = !enabled;
+  }
+
+  /* ================================================================
+     SUGERENCIAS DE BIENVENIDA
+  ================================================================ */
+  document.querySelectorAll('.suggestion-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const prompt = card.dataset.prompt;
+      if (prompt) {
+        messageInput.value = prompt;
+        autoResizeTextarea(messageInput);
+        sendBtn.disabled = false;
+        messageInput.dispatchEvent(new Event('input'));
+        handleSendMessage();
+      }
+    });
+  });
+
+  /* ================================================================
+     FLUJO PRINCIPAL DE ENVÍO DE MENSAJE
+  ================================================================ */
+  async function handleSendMessage() {
+    const content = messageInput.value.trim();
+    if (!content || AppState.isStreaming) return;
+    if (!AppState.currentUser) {
+      showToast('Error', 'Debes iniciar sesión para enviar mensajes.', 'error');
+      return;
+    }
+    if (!navigator.onLine) {
+      showToast('Sin conexión', 'No hay conexión a internet.', 'warning');
+      return;
+    }
+
+    // Limpiar input
+    messageInput.value = '';
+    autoResizeTextarea(messageInput);
+    charCounter.textContent = `0 / ${MAX_CHAR_INPUT}`;
+    charCounter.className   = 'char-counter';
+    setInputEnabled(false);
+
+    // Crear chat en Firestore si no existe
+    if (!AppState.currentChatId) {
+      const chatId = await createNewChat(content);
+      if (!chatId) {
+        setInputEnabled(true);
+        showToast('Error', 'No se pudo crear el chat.', 'error');
+        return;
+      }
+    }
+
+    // Renderizar mensaje del usuario
+    renderMessage('user', content, new Date());
+
+    // Guardar mensaje del usuario en Firestore
+    saveMessage(AppState.currentChatId, 'user', content);
+
+    // Agregar al contexto local
+    AppState.messageHistory.push({ role: 'user', content });
+    if (AppState.messageHistory.length > MAX_HISTORY_CONTEXT) {
+      AppState.messageHistory = AppState.messageHistory.slice(-MAX_HISTORY_CONTEXT);
+    }
+
+    scrollToBottom(true);
+
+    // Llamar a la API con streaming
+    await streamAIResponse(content);
+  }
+
+  /* ================================================================
+     ABACUS API — STREAMING LETRA POR LETRA
+  ================================================================ *//**
+   * Llama a la API de Abacus con streaming SSE y renderiza la respuesta
+   * letra por letra en tiempo real.
+   * @param {string} userMessage - Último mensaje del usuario
+   */
+  async function streamAIResponse(userMessage) {
+    AppState.isStreaming     = true;
+    AppState.abortController = new AbortController();
+
+    // Mostrar indicador de escritura
+    showTypingIndicator();
+    document.getElementById('stop-btn').classList.remove('hidden');
+
+    // Construir payload con historial de contexto
+    const messages = [
+      {
+        role:    'system',
+        content: 'Eres ZENITH AI, un asistente de inteligencia artificial avanzado, preciso, amigable y altamente capaz. Responde siempre en el idioma del usuario. Usa Markdown para formatear tus respuestas cuando sea apropiado (listas, código, tablas, etc.).',
+      },
+      ...AppState.messageHistory.slice(0, -1), // Historial sin el último (ya incluido abajo)
+      { role: 'user', content: userMessage },
+    ];
+
+    let fullResponse    = '';
+    let aiMessageWrapper= null;
+    let aiBubble        = null;
+    let streamingCursor = null;
+
+    try {
+      const response = await fetch(ABACUS_API_ENDPOINT, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${ABACUS_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model:       AI_MODEL,
+          messages:    messages,
+          stream:      true,
+          temperature: 0.7,
+          max_tokens:  4096,
+        }),
+        signal: AppState.abortController.signal,
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Error HTTP ${response.status}`;
         try {
-            const res = await fetch(WORKER_URL, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    messages: conversationHistory,
-                    userId: currentUser ? currentUser.uid : 'anonymous',
-                    file: fileToSend
-                })
-            });
+          const errData = await response.json();
+          errorMsg = errData.error?.message || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
+      }
 
-            // ¡Mejora de lectura de errores profundos aplicada!
-            if (!res.ok) {
-                let errorMsg = `Error HTTP: ${res.status}`;
-                try {
-                    const errorData = await res.json();
-                    errorMsg = errorData.error || errorData.message || errorMsg;
-                } catch (e) {}
-                throw new Error(errorMsg);
+      // Ocultar typing indicator y crear burbuja de respuesta
+      hideTypingIndicator();
+      aiMessageWrapper = renderStreamingMessage();
+      aiBubble         = aiMessageWrapper.querySelector('.message-bubble.ai-bubble');
+      streamingCursor  = document.createElement('span');
+      streamingCursor.className = 'streaming-cursor';
+      aiBubble.appendChild(streamingCursor);
+
+      // Leer el stream SSE
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let   buffer  = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Guardar línea incompleta
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === 'data: [DONE]') continue;
+          if (!trimmed.startsWith('data: ')) continue;
+
+          try {
+            const jsonStr = trimmed.slice(6); // Quitar "data: "
+            const parsed  = JSON.parse(jsonStr);
+            const delta   = parsed.choices?.[0]?.delta?.content;
+
+            if (delta) {
+              fullResponse += delta;
+              // Renderizar markdown incremental
+              if (streamingCursor) streamingCursor.remove();
+              aiBubble.innerHTML = renderMarkdown(fullResponse);
+              streamingCursor = document.createElement('span');
+              streamingCursor.className = 'streaming-cursor';
+              aiBubble.appendChild(streamingCursor);
+
+              // Aplicar highlight a bloques de código nuevos
+              if (typeof hljs !== 'undefined') {
+                aiBubble.querySelectorAll('pre code:not(.hljs)').forEach(b => hljs.highlightElement(b));
+              }
+
+              scrollToBottom(false);
             }
-
-            const data = await res.json();
-            const aiReply = data.reply || data.message || "Ocurrió un error leyendo la respuesta de la IA.";
-            
-            thinking.classList.remove('typing');
-            thinking.textContent = aiReply;
-            saveMessage(aiReply, 'ai');
-            conversationHistory.push({role: 'assistant', content: aiReply});
-        } catch (err) {
-            thinking.classList.remove('typing');
-            thinking.textContent = `⚠️ Sistema: ${err.message || 'Error de conexión con la IA.'}`;
-            console.error(err);
-        } finally {
-            queryInput.disabled = false;
-            sendBtn.disabled = false;
-            queryInput.focus();
-            
-            // ¡El scroll automático al final asegurado!
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+          } catch (parseErr) {
+            // Ignorar líneas malformadas del stream
+          }
         }
+      }
+
+    } catch (err) {
+      hideTypingIndicator();
+
+      if (err.name === 'AbortError') {
+        // El usuario detuvo la generación
+        if (aiBubble && fullResponse) {
+          if (streamingCursor) streamingCursor.remove();
+          aiBubble.innerHTML = renderMarkdown(fullResponse) +
+            '<br><em style="color:var(--text-muted);font-size:0.8rem">— Generación detenida —</em>';
+        } else if (aiMessageWrapper) {
+          aiMessageWrapper.remove();
+        }
+        showToast('Detenido', 'Generación cancelada.', 'info', 2000);
+      } else {
+        console.error('[API] Error en streaming:', err);
+
+        // Mostrar burbuja de error
+        if (aiMessageWrapper) aiMessageWrapper.remove();
+        renderErrorMessage(err.message || 'Error desconocido al conectar con la IA.');
+        showToast('Error de API', err.message || 'No se pudo obtener respuesta.', 'error');
+      }
+    } finally {
+      // Limpiar cursor de streaming
+      if (streamingCursor && streamingCursor.parentNode) streamingCursor.remove();
+
+      // Guardar respuesta completa en Firestore si hay contenido
+      if (fullResponse && AppState.currentChatId) {
+        saveMessage(AppState.currentChatId, 'assistant', fullResponse);
+        // Agregar al contexto local
+        AppState.messageHistory.push({ role: 'assistant', content: fullResponse });
+        if (AppState.messageHistory.length > MAX_HISTORY_CONTEXT) {
+          AppState.messageHistory = AppState.messageHistory.slice(-MAX_HISTORY_CONTEXT);
+        }
+      }
+
+      // Restaurar estado
+      AppState.isStreaming     = false;
+      AppState.abortController = null;
+      setInputEnabled(true);
+      document.getElementById('stop-btn').classList.add('hidden');
+      messageInput.focus();
+      scrollToBottom(true);
+    }
+  }
+
+  /**
+   * Crea y retorna el wrapper del mensaje de la IA durante el streaming.
+   * @returns {HTMLElement}
+   */
+  function renderStreamingMessage() {
+    hideWelcomeScreen();
+    const container = document.getElementById('messages-container');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper';
+    wrapper.id        = 'streaming-message';
+    wrapper.innerHTML = `
+      <div class="message-row ai-row">
+        <div class="message-avatar ai-avatar">ZAI</div>
+        <div class="message-content-wrapper">
+          <div class="message-sender-name">ZENITH AI</div>
+          <div class="message-bubble ai-bubble"></div>
+          <div class="message-timestamp">${formatMessageTime(new Date())}</div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(wrapper);
+    scrollToBottom(true);
+    return wrapper;
+  }/**
+   * Renderiza una burbuja de error cuando la API falla.
+   * @param {string} errorText
+   */
+  function renderErrorMessage(errorText) {
+    hideWelcomeScreen();
+    const container = document.getElementById('messages-container');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper';
+    wrapper.innerHTML = `
+      <div class="message-row ai-row">
+        <div class="message-avatar ai-avatar">ZAI</div>
+        <div class="message-content-wrapper">
+          <div class="message-sender-name">ZENITH AI</div>
+          <div class="message-error-bubble">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>${escapeHtml(errorText)}</span>
+            <button class="btn-retry" onclick="retryLastMessage(this)">Reintentar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(wrapper);
+    scrollToBottom(true);
+  }
+
+  /**
+   * Reintenta el último mensaje del usuario.
+   */
+  window.retryLastMessage = function(btn) {
+    // Eliminar burbuja de error
+    const wrapper = btn.closest('.message-wrapper');
+    if (wrapper) wrapper.remove();
+
+    // Buscar el último mensaje del usuario en el historial
+    const lastUserMsg = [...AppState.messageHistory].reverse().find(m => m.role === 'user');
+    if (lastUserMsg) {
+      setInputEnabled(false);
+      streamAIResponse(lastUserMsg.content);
+    } else {
+      showToast('Error', 'No hay mensaje para reintentar.', 'warning');
+    }
+  };
+
+  /* ================================================================
+     BOTÓN STOP GENERATION
+  ================================================================ */
+  document.getElementById('stop-btn').addEventListener('click', () => {
+    if (AppState.abortController) {
+      AppState.abortController.abort();
+    }
+  });
+
+  /* ================================================================
+     WEB SPEECH API — MICRÓFONO
+  ================================================================ */
+  const micBtn          = document.getElementById('mic-btn');
+  const voiceOverlay    = document.getElementById('voice-overlay');
+  const voiceTranscript = document.getElementById('voice-transcript-preview');
+  const voiceCancelBtn  = document.getElementById('voice-cancel-btn');
+
+  /**
+   * Verifica si el navegador soporta Web Speech API.
+   */
+  function isSpeechSupported() {
+    return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+  }
+
+  /**
+   * Inicializa el objeto SpeechRecognition.
+   */
+  function initSpeechRecognition() {
+    if (!isSpeechSupported()) return null;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition       = new SpeechRecognition();
+
+    recognition.continuous      = true;
+    recognition.interimResults  = true;
+    recognition.lang            = navigator.language || 'es-ES';
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      AppState.isListening = true;
+      micBtn.classList.add('listening');
+      voiceOverlay.classList.remove('hidden');
+      voiceTranscript.textContent = '';
+    };
+
+    recognition.onresult = e => {
+      let interimTranscript = '';
+      let finalTranscript   = '';
+
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const transcript = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      voiceTranscript.textContent = finalTranscript || interimTranscript;
+
+      if (finalTranscript) {
+        // Insertar texto transcrito en el input
+        const current = messageInput.value;
+        messageInput.value = current
+          ? current + ' ' + finalTranscript.trim()
+          : finalTranscript.trim();
+        autoResizeTextarea(messageInput);
+        messageInput.dispatchEvent(new Event('input'));
+      }
+    };
+
+    recognition.onerror = e => {
+      console.error('[SpeechRecognition] Error:', e.error);
+      stopListening();
+
+      const errorMessages = {
+        'no-speech':          'No se detectó voz. Intenta de nuevo.',
+        'audio-capture':      'No se pudo acceder al micrófono.',
+        'not-allowed':        'Permiso de micrófono denegado.',
+        'network':            'Error de red en reconocimiento de voz.',
+        'aborted':            '',
+        'service-not-allowed':'Servicio de voz no disponible.',
+      };
+      const msg = errorMessages[e.error];
+      if (msg) showToast('Micrófono', msg, 'warning');
+    };
+
+    recognition.onend = () => {
+      if (AppState.isListening) {
+        // Reiniciar si sigue activo (para reconocimiento continuo)
+        try { recognition.start(); } catch {}
+      } else {
+        stopListening();
+      }
+    };
+
+    return recognition;
+  }
+
+  function startListening() {
+    if (!isSpeechSupported()) {
+      showToast('No soportado', 'Tu navegador no soporta reconocimiento de voz.', 'warning');
+      return;
+    }
+    if (AppState.isStreaming) {
+      showToast('Espera', 'Espera a que la IA termine de responder.', 'info');
+      return;
     }
 
-    sendBtn.addEventListener('click', sendMessage);
-    queryInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
-    menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-    newChatBtn.addEventListener('click', () => { sidebar.classList.remove('open'); startNewChat(); });
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    if (!AppState.speechRecognition) {
+      AppState.speechRecognition = initSpeechRecognition();
     }
 
-        console.log('%c🚀 ZENITH AI – Listo para producción', 'color:#2c3e66; font-weight:700');
-</script>
+    try {
+      AppState.isListening = true;
+      AppState.speechRecognition.start();
+    } catch (err) {
+      console.error('[SpeechRecognition] No se pudo iniciar:', err);
+      AppState.isListening = false;
+    }
+  }
+
+  function stopListening() {
+    AppState.isListening = false;
+    micBtn.classList.remove('listening');
+    voiceOverlay.classList.add('hidden');
+    voiceTranscript.textContent = '';
+
+    if (AppState.speechRecognition) {
+      try { AppState.speechRecognition.stop(); } catch {}
+    }
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (AppState.isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  });
+
+  voiceCancelBtn.addEventListener('click', () => {
+    stopListening();
+  });
+
+  // Cerrar overlay de voz con Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (AppState.isListening) stopListening();
+      if (!document.getElementById('modal-overlay').classList.contains('hidden')) {
+        modalOverlay.classList.add('hidden');
+        if (modalResolve) { modalResolve(false); modalResolve = null; }
+      }
+      if (AppState.userMenuOpen) closeUserMenu();
+    }
+  });
+
+  /* ================================================================
+     RIPPLE EFFECT EN BOTONES DE AUTH
+  ================================================================ */
+  document.querySelectorAll('.btn-auth-primary').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-effect';
+      const rect = this.getBoundingClientRect();
+      ripple.style.left = (e.clientX - rect.left) + 'px';
+      ripple.style.top  = (e.clientY - rect.top)  + 'px';
+      this.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+  });
+
+  /* ================================================================
+     SPLASH SCREEN
+  ================================================================ */
+  function hideSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 500);
+    }
+  }
+
+  /* ================================================================
+     CONFIGURACIÓN (placeholder para Fase 2)
+  ================================================================ */
+  document.getElementById('menu-settings').addEventListener('click', () => {
+    closeUserMenu();
+    showToast('Configuración', 'Disponible en la próxima versión.', 'info');
+  });
+
+  /* ================================================================
+     INICIALIZACIÓN PRINCIPAL
+  ================================================================ */(function init() {
+    // Inicializar Firebase
+    if (!initFirebase()) {
+      hideSplash();
+      return;
+    }
+
+    // Configurar Marked.js
+    configureMarked();
+
+    // Iniciar observer de autenticación
+    setupAuthObserver();
+
+    // Verificar soporte de micrófono y ajustar UI
+    if (!isSpeechSupported()) {
+      micBtn.title   = 'Reconocimiento de voz no soportado en este navegador';
+      micBtn.style.opacity = '0.4';
+      micBtn.style.cursor  = 'not-allowed';
+      micBtn.disabled      = true;
+    }
+
+    // Ajustar sidebar inicial según tamaño de pantalla
+    if (window.innerWidth <= 768) {
+      AppState.isMobile    = true;
+      AppState.sidebarOpen = false;
+    }
+
+    console.info('[ZENITH AI] Fase 1 inicializada correctamente.');
+  })();
+
+  </script>
 </body>
 </html>
