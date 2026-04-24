@@ -1930,8 +1930,8 @@
     toast.innerHTML = `
       <span class="toast-icon">${icons[type] || icons.info}</span>
       <div class="toast-content">
-        <div class="toast-title">$${escapeHtml(title)}</div>
-        $${message ? `<div class="toast-message">${escapeHtml(message)}</div>` : ''}
+        <div class="toast-title">${escapeHtml(title)}</div>
+        ${message ? `<div class="toast-message">${escapeHtml(message)}</div>` : ''}
       </div>
     `;
     toastContainer.appendChild(toast);
@@ -2690,8 +2690,8 @@
       item.innerHTML = `
         <div class="chat-history-item-icon">💬</div>
         <div class="chat-history-item-content">
-          <div class="chat-history-item-title" title="${escapeHtml(title)}">$${escapeHtml(title)}</div>
-          <div class="chat-history-item-date">$${timeStr}</div>
+          <div class="chat-history-item-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+          <div class="chat-history-item-date">${timeStr}</div>
         </div>
         <button class="chat-history-item-delete" data-chat-id="${chatId}" title="Eliminar chat" aria-label="Eliminar chat">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2791,7 +2791,7 @@
     let avatarHtml;
     if (isUser) {
       if (user && user.photoURL) {
-        avatarHtml = `<div class="message-avatar user-avatar-msg"><img src="$${user.photoURL}" alt="$${escapeHtml(userName)}" referrerpolicy="no-referrer" /></div>`;
+        avatarHtml = `<div class="message-avatar user-avatar-msg"><img src="${user.photoURL}" alt="${escapeHtml(userName)}" referrerpolicy="no-referrer" /></div>`;
       } else {
         avatarHtml = `<div class="message-avatar user-avatar-msg">${getInitials(userName)}</div>`;
       }
@@ -2799,15 +2799,15 @@
       avatarHtml = `<div class="message-avatar ai-avatar">ZAI</div>`;
     }const bubbleContent = isUser
       ? `<div class="message-bubble user-bubble">${escapeHtml(content).replace(/\n/g, '<br>')}</div>`
-      : `<div class="message-bubble ai-bubble">$${renderMarkdown(content)}</div>`;
+      : `<div class="message-bubble ai-bubble">${renderMarkdown(content)}</div>`;
 
     wrapper.innerHTML = `
-      <div class="message-row $${isUser ? 'user-row' : 'ai-row'}">
+      <div class="message-row ${isUser ? 'user-row' : 'ai-row'}">
         ${avatarHtml}
         <div class="message-content-wrapper">
           <div class="message-sender-name">${isUser ? escapeHtml(userName) : 'ZENITH AI'}</div>
-          $${bubbleContent}
-          <div class="message-timestamp">$${timeStr}</div>
+          ${bubbleContent}
+          <div class="message-timestamp">${timeStr}</div>
           <div class="message-actions">
             <button class="msg-action-btn" onclick="copyMessageContent(this)" title="Copiar">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
