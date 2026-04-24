@@ -3946,6 +3946,54 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
 
     console.info('[ZENITH AI] Fase 1 inicializada correctamente.');
   })();
+    /* ============================================================
+   ZENITH AI — LANDING TRANSITION LOGIC
+   Maneja el clic del botón "Let's Go"
+============================================================ */
+(function initLandingTransition() {
+  const landing = document.getElementById('landing-screen');
+  const btnLetsGo = document.getElementById('btn-lets-go');
+  const authScreen = document.getElementById('auth-screen');
+  const appScreen  = document.getElementById('app-screen');
+
+  if (!landing || !btnLetsGo) return;
+
+  // Oculta el landing con fade-out elegante
+  function hideLanding() {
+    landing.classList.add('fade-out');
+    setTimeout(() => { landing.style.display = 'none'; }, 500);
+  }
+
+  // Clic en LET'S GO
+  btnLetsGo.addEventListener('click', () => {
+    const user = (typeof auth !== 'undefined' && auth.currentUser)
+      ? auth.currentUser
+      : null;
+
+    hideLanding();
+
+    setTimeout(() => {
+      if (user) {
+        // Usuario logueado → directo al chat
+        if (appScreen)  appScreen.style.display  = 'flex';
+        if (authScreen) authScreen.style.display = 'none';
+      } else {
+        // No logueado → pantalla de login
+        if (authScreen) authScreen.style.display = 'flex';
+        if (appScreen)  appScreen.style.display  = 'none';
+      }
+    }, 500);
+  });
+
+  // Al cargar, asegura que auth-screen y app-screen estén ocultos
+  // mientras el landing esté visible
+  document.addEventListener('DOMContentLoaded', () => {
+    if (landing && landing.style.display !== 'none') {
+      if (authScreen) authScreen.style.display = 'none';
+      if (appScreen)  appScreen.style.display  = 'none';
+    }
+  });
+})();
 
   </script>
 </body>
